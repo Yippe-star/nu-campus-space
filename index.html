@@ -1,0 +1,2647 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>NU Campus Space</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Clickable prototype of NU Campus Space: group study room booking, QR check-in and live occupancy for Nazarbayev University. Student course project with sample data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: the student app sits in a phone frame on the left; the desk console, lobby screen and live data share the right pane. Under 1080px one pane shows at a time. */
+:root{
+  --bg:#e7ecef; --surface:#ffffff; --surface-2:#f2f5f7; --line:#cfd8de; --line-2:#b5c1c9;
+  --ink:#11202a; --ink-2:#42515c; --ink-3:#63727d;
+  --accent:#0a5b6f; --accent-strong:#06485a; --accent-ink:#ffffff; --accent-soft:#d6e9ee;
+  --free:#156c3c; --free-bg:#dcf0e3; --free-line:#99cdab;
+  --res:#845400; --res-bg:#faedcc; --res-line:#e0bc6c;
+  --occ:#9e2a23; --occ-bg:#f7dcd9; --occ-line:#e09d96;
+  --off:#53606a; --off-bg:#e2e7ea; --off-line:#c0c9cf;
+  --bar:#12202a; --bar-2:#1e2e39; --bar-ink:#e8eff3; --bar-ink-2:#9db0bc; --bar-accent:#85d2e3;
+  --scr-bg:#0a1318; --scr-panel:#111e25; --scr-ink:#eef4f7; --scr-ink-2:#91a6b1; --scr-line:#21323c;
+  --scr-free:#7ddfa5; --scr-free-bg:#0e2e1f; --scr-res:#f4ca69; --scr-res-bg:#33280b;
+  --scr-occ:#ff9d93; --scr-occ-bg:#3a1613; --scr-off:#9fb0ba; --scr-off-bg:#18242b;
+  --qr-bg:#ffffff; --qr-ink:#000000; --focus:#2a7de1;
+  --shadow:0 1px 2px rgb(17 32 42 / .06), 0 12px 32px rgb(17 32 42 / .10);
+  --font-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-sign:"Barlow Semi Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --font-mono:ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1317; --surface:#141f26; --surface-2:#19262e; --line:#283841; --line-2:#3a4b55;
+    --ink:#e4ecf0; --ink-2:#b0bfc8; --ink-3:#8697a2;
+    --accent:#5fb5ca; --accent-strong:#80c7d8; --accent-ink:#05222a; --accent-soft:#143640;
+    --free:#76d59c; --free-bg:#11301f; --free-line:#2b6845;
+    --res:#efc35f; --res-bg:#33270b; --res-line:#77591a;
+    --occ:#f49b93; --occ-bg:#3a1815; --occ-line:#843f38;
+    --off:#a2afb7; --off-bg:#1f2a31; --off-line:#3a4851;
+    --bar:#05090c; --bar-2:#13202a; --bar-ink:#e4ecf0; --bar-ink-2:#8a9ca7; --bar-accent:#86d3e4;
+    --shadow:0 1px 2px rgb(0 0 0 / .5), 0 12px 32px rgb(0 0 0 / .35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1317; --surface:#141f26; --surface-2:#19262e; --line:#283841; --line-2:#3a4b55;
+  --ink:#e4ecf0; --ink-2:#b0bfc8; --ink-3:#8697a2;
+  --accent:#5fb5ca; --accent-strong:#80c7d8; --accent-ink:#05222a; --accent-soft:#143640;
+  --free:#76d59c; --free-bg:#11301f; --free-line:#2b6845;
+  --res:#efc35f; --res-bg:#33270b; --res-line:#77591a;
+  --occ:#f49b93; --occ-bg:#3a1815; --occ-line:#843f38;
+  --off:#a2afb7; --off-bg:#1f2a31; --off-line:#3a4851;
+  --bar:#05090c; --bar-2:#13202a; --bar-ink:#e4ecf0; --bar-ink-2:#8a9ca7; --bar-accent:#86d3e4;
+  --shadow:0 1px 2px rgb(0 0 0 / .5), 0 12px 32px rgb(0 0 0 / .35);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--font-body)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.55}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:0 4px}
+h1,h2,h3,h4,p{margin:0}
+.m0{margin:0}
+.small{font-size:13.5px}
+.muted{color:var(--ink-3)}
+.strong{font-weight:700}
+
+/* ---------- top bar ---------- */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--bar)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bar);color:var(--bar-ink)}
+.bar-in{max-width:1440px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.brand svg{width:28px;height:28px;color:var(--bar-accent);flex:none}
+.brand b{display:block;font:700 20px/1 var(--font-sign);letter-spacing:.01em}
+.brand small{display:block;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--bar-ink-2);margin-top:3px}
+.tabs{display:flex;gap:4px;background:var(--bar-2);padding:4px;border-radius:10px;order:5;width:100%;overflow-x:auto}
+.tab{flex:1;border:0;background:transparent;color:var(--bar-ink-2);padding:7px 12px;border-radius:7px;font-weight:700;font-size:14px;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--bar-ink);color:var(--bar)}
+.clock{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--bar-ink-2);flex-wrap:wrap}
+.clock b{font:700 20px/1 var(--font-sign);color:var(--bar-ink);font-variant-numeric:tabular-nums}
+.bbtn{background:var(--bar-2);color:var(--bar-ink);border:1px solid transparent;border-radius:8px;padding:6px 10px;font-weight:700;font-size:13px;white-space:nowrap}
+.bbtn:hover{border-color:var(--bar-ink-2)}
+.tools{position:relative}
+.tools>summary{list-style:none;display:inline-flex;align-items:center;gap:6px}
+.tools>summary::-webkit-details-marker{display:none}
+.tools[open]>summary{background:var(--bar-ink);color:var(--bar)}
+.tools-panel{position:absolute;right:0;top:calc(100% + 10px);width:min(400px, calc(100vw - 32px));max-height:min(74vh,700px);overflow:auto;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px;display:grid;gap:16px;z-index:50}
+.tools-panel h4{font:700 12px/1.2 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px}
+.tools-panel ol{margin:0;padding-left:20px;display:grid;gap:4px;font-size:14px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:4px 0}
+.check input{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.tab .lg{display:none}
+@media (min-width:760px){.tabs{order:0;width:auto}.tab{flex:none}.tab .lg{display:inline}}
+@media (max-width:759px){.bar{position:relative;top:0}}
+@media (max-width:480px){.arr,.alert{grid-template-columns:1fr}.arr .btn,.alert .btn{justify-self:start}}
+@media (min-width:1080px){.tab-student{display:none}}
+@media (max-width:759px){
+  .tools{order:6;width:100%}
+  .tools-panel{position:static;width:100%;margin-top:8px;max-height:60vh}
+}
+.intro{max-width:1440px;margin:0 auto;padding-block:14px 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));color:var(--ink-2);font-size:14px}
+.intro b{color:var(--ink)}
+
+/* ---------- stage ---------- */
+.stage{max-width:1440px;margin:0 auto;padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:24px;align-items:start}
+.pane{min-width:0}
+@media (min-width:1080px){
+  .stage{grid-template-columns:392px minmax(0,1fr)}
+  #pane-student{grid-column:1;grid-row:1}
+  .side{grid-column:2;grid-row:1}
+}
+
+/* ---------- phone ---------- */
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;max-width:440px;margin-inline:auto}
+@media (min-width:1080px){.phone{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);height:calc(100vh - 100px);min-height:600px;max-height:880px}}
+.ph-bar{display:flex;align-items:center;gap:8px;padding:14px 16px 4px}
+.ph-brand{display:flex;align-items:center;gap:8px;font:700 18px/1 var(--font-sign);margin-right:auto}
+.ph-brand svg{width:22px;height:22px;color:var(--accent);flex:none}
+.lang{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.lang button{border:0;background:transparent;padding:5px 8px;font-size:12px;font-weight:700;color:var(--ink-3)}
+.lang button+button{border-left:1px solid var(--line)}
+.lang button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.ph-sub{padding:2px 16px 10px;font-size:12.5px;color:var(--ink-3);border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ph-scroll{position:relative;flex:1;overflow:auto;overscroll-behavior:contain}
+@media (max-width:1079px){.ph-scroll{overflow:visible}}
+#ph-body{padding:16px 16px 28px;display:grid;gap:20px}
+.ph-tabs{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);background:var(--surface)}
+.ph-tabs button{border:0;background:transparent;padding:10px 8px 12px;display:grid;justify-items:center;gap:3px;font-size:12.5px;font-weight:700;color:var(--ink-3)}
+.ph-tabs svg{width:22px;height:22px}
+.ph-tabs button[aria-current="page"]{color:var(--accent)}
+
+/* phone content */
+.h1{font:700 28px/1.08 var(--font-sign);letter-spacing:.005em;text-wrap:balance}
+.h2{font:700 20px/1.15 var(--font-sign);letter-spacing:.01em}
+.h3{font:700 15px/1.2 var(--font-body);color:var(--ink-2)}
+.sub{color:var(--ink-2);font-size:15px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.code{font:700 22px/1 var(--font-sign);letter-spacing:.02em}
+.code.sm{font-size:17px}
+.code.xl{font-size:38px}
+.stack{display:grid;gap:14px}
+.stack-sm{display:grid;gap:10px}
+.stack-xs{display:grid;gap:4px}
+.row-between{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.note{background:var(--res-bg);border:1px solid var(--res-line);border-radius:12px;padding:10px 12px;font-size:14px}
+.err{background:var(--occ-bg);border:1px solid var(--occ-line);border-radius:12px;padding:10px 12px;font-size:14px;color:var(--ink)}
+.warn{color:var(--occ);font-weight:700}
+.ecode{display:inline-block;font:700 11px/1.5 var(--font-mono);letter-spacing:.04em;color:var(--ink-3);border:1px solid var(--line-2);border-radius:5px;padding:0 5px;vertical-align:2px}
+.flash{background:var(--free-bg);border:1px solid var(--free-line);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:700}
+.field{display:grid;gap:6px;min-width:0}
+.field label{font-size:13px;font-weight:700;color:var(--ink-2)}
+.field input,.field select{min-height:46px;width:100%;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);padding:0 12px}
+.field.narrow{width:120px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hello{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.left-time{display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap}
+.left-time b{font:700 40px/1 var(--font-sign);color:var(--accent)}
+.left-time span{font-weight:700;color:var(--ink-2)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 16px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-weight:700;font-size:15px;text-align:center;line-height:1.2}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--accent-strong);border-color:var(--accent-strong)}
+.btn.block{width:100%}
+.btn.sm{min-height:40px;padding:0 12px;font-size:14px;border-radius:10px}
+.btn.demo{border-style:dashed;background:transparent;color:var(--ink-2)}
+.btn.danger{color:var(--occ);border-color:var(--occ-line)}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.back{justify-self:start;border:0;background:none;padding:4px 0;color:var(--accent);font-weight:700;font-size:15px}
+
+.st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap;justify-self:start}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.free{color:var(--free);background:var(--free-bg);border-color:var(--free-line)}
+.st.res{color:var(--res);background:var(--res-bg);border-color:var(--res-line)}
+.st.occ{color:var(--occ);background:var(--occ-bg);border-color:var(--occ-line)}
+.st.off{color:var(--off);background:var(--off-bg);border-color:var(--off-line)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.room-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
+.room-card,.sugg{width:100%;display:grid;gap:6px;text-align:left}
+.room-card:hover,.sugg:hover{border-color:var(--accent)}
+.list.compact{gap:0}
+.other{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.other:last-child{border-bottom:0}
+.kept{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+
+.tl{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.slot{display:grid;grid-template-columns:112px minmax(0,1fr) 26px;align-items:center;gap:10px;min-height:48px;padding:0 12px 0 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);width:100%;text-align:left;font-variant-numeric:tabular-nums}
+.slot .t{font-weight:700}
+.slot .w{font-weight:700;font-size:14px}
+.slot.free .w{color:var(--free)}
+.slot.free:hover{border-color:var(--free-line)}
+.slot.booked{background:var(--off-bg);border-color:transparent;color:var(--ink-2)}
+.slot.yours{background:var(--res-bg);border-color:var(--res-line)}
+.slot.past{min-height:38px;background:transparent;border-style:dashed;color:var(--ink-3)}
+.slot.chosen{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.slot.chosen .w{color:var(--accent)}
+.tick{width:24px;height:24px;border-radius:7px;border:2px solid var(--line-2);display:grid;place-items:center;font-size:14px;font-weight:700}
+.slot.chosen .tick{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.act{border:2px solid var(--accent);border-radius:14px;padding:14px;display:grid;gap:12px;background:var(--surface);margin:4px 0 8px}
+.act-t{font-size:16px}
+.roomhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+
+.center{text-align:center;justify-items:center}
+.center .card{text-align:left;justify-self:stretch}
+.center .btn.block{justify-self:stretch}
+.okline{color:var(--free);font-weight:700;font-size:17px}
+.qrwrap{background:var(--qr-bg);border-radius:16px;padding:12px;width:min(236px,100%);border:1px solid var(--line)}
+.qr{display:block;width:100%;height:auto}
+.qr .qb{fill:var(--qr-bg)}
+.qr .qf{fill:var(--qr-ink)}
+.qr-missing{color:#000;font-size:13px;padding:24px 8px;text-align:center}
+.bcode{font:700 16px/1 var(--font-mono);letter-spacing:.06em}
+.ask{background:var(--occ-bg);border:1px solid var(--occ-line);border-radius:12px;padding:12px;display:grid;gap:10px;text-align:left;justify-self:stretch}
+
+/* ---------- side panes ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+.side-stack{display:grid;gap:18px}
+.side-stack>*,.cols>*,.stack>*,.stack-sm>*{min-width:0}
+.pane-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.pane-head h2{font:700 30px/1 var(--font-sign)}
+.pane-head p{color:var(--ink-2);font-size:14px;margin-top:4px}
+.meta-row{display:flex;gap:8px;flex-wrap:wrap;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--surface-2);font-weight:700;white-space:nowrap}
+.pill.ok{color:var(--free);border-color:var(--free-line);background:var(--free-bg)}
+.pill.bad{color:var(--occ);border-color:var(--occ-line);background:var(--occ-bg)}
+.scan label{display:block;font-weight:700;font-size:14px;color:var(--ink-2);margin-bottom:8px}
+.scan-row{display:flex;gap:10px}
+.scan-row input{flex:1;min-width:0;min-height:54px;border:2px solid var(--line-2);border-radius:12px;background:var(--surface);padding:0 14px;font:600 18px var(--font-mono);letter-spacing:.04em;text-transform:uppercase}
+.scan-row .btn{min-height:54px}
+.result{margin-top:12px;border-radius:12px;padding:12px 14px;border:1px solid;display:grid;gap:3px}
+.result b{font-size:16px}
+.result.ok{background:var(--free-bg);border-color:var(--free-line)}
+.result.ok b{color:var(--free)}
+.result.err{background:var(--occ-bg);border-color:var(--occ-line)}
+.result.err b{color:var(--occ)}
+.result.info{background:var(--surface-2);border-color:var(--line)}
+.result.queued{background:var(--res-bg);border-color:var(--res-line)}
+.result.queued b{color:var(--res)}
+.cols{display:grid;gap:18px}
+@media (min-width:900px){.cols{grid-template-columns:1fr 1fr}}
+.panel h3{font:700 19px/1.1 var(--font-sign);margin-bottom:12px;letter-spacing:.01em}
+.arr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.arr:last-child{border-bottom:0}
+.alert{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2)}
+.alert.hot{background:var(--occ-bg);border-color:var(--occ-line)}
+.empty{color:var(--ink-3);font-size:14px}
+.privacy{font-size:13px;color:var(--ink-3)}
+
+.gridwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.dg{position:relative;display:grid;grid-template-columns:86px repeat(var(--n),minmax(0,1fr));grid-auto-rows:48px;min-width:calc(86px + var(--n) * 38px);font-size:12.5px}
+.dg-corner,.dg-h{grid-row:1;font-weight:700;color:var(--ink-3);font-size:12px;padding:10px 4px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;height:36px}
+.dg-corner{grid-column:1;padding-left:10px}
+.dg-room{grid-column:1;display:flex;flex-direction:column;justify-content:center;padding:0 10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface)}
+.dg-room b{font:700 17px/1 var(--font-sign)}
+.dg-room span{font-size:11px;color:var(--ink-3)}
+.dg-lane{grid-column:2 / -1;border-bottom:1px solid var(--line);background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px calc(200% / var(--n)))}
+.dg-b{margin:6px 2px;border-radius:7px;padding:3px 7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid;font-size:12px;line-height:1.2;display:flex;flex-direction:column;justify-content:center;min-width:0;z-index:1;color:var(--ink)}
+.dg-b b{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase}
+.dg-b span{overflow:hidden;text-overflow:ellipsis}
+.dg-b.booked{background:var(--res-bg);border-color:var(--res-line)}
+.dg-b.booked b{color:var(--res)}
+.dg-b.in{background:var(--occ-bg);border-color:var(--occ-line)}
+.dg-b.in b{color:var(--occ)}
+.dg-b.done{background:var(--off-bg);border-color:var(--off-line);color:var(--ink-2)}
+.dg-b.noshow{background:repeating-linear-gradient(135deg,var(--off-bg) 0 6px,var(--surface) 6px 12px);border-style:dashed;border-color:var(--off-line);color:var(--ink-2)}
+.dg-b.closed{background:var(--off-bg);border-color:var(--off-line);color:var(--ink-2)}
+.dg-b.mine{box-shadow:inset 0 0 0 2px var(--accent)}
+.dg-now{position:absolute;top:0;bottom:0;width:2px;background:var(--occ);left:calc(86px + (100% - 86px) * var(--f));z-index:2;pointer-events:none}
+.dg-now span{position:absolute;bottom:3px;left:5px;font-size:11px;font-weight:700;color:var(--occ);background:var(--surface);padding:0 4px;border-radius:4px;font-variant-numeric:tabular-nums}
+
+/* lobby screen */
+.lobby{background:var(--scr-bg);color:var(--scr-ink);border-radius:20px;padding:24px;border:10px solid var(--bar);box-shadow:var(--shadow);display:grid;gap:20px}
+.lobby-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;border-bottom:2px solid var(--scr-line);padding-bottom:14px}
+.lobby-head p{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--scr-ink-2)}
+.lobby-head h2{font:700 clamp(28px,3.4vw,44px)/1 var(--font-sign);margin-top:4px}
+.lobby-clock{text-align:right}
+.lobby-clock b{display:block;font:700 clamp(32px,4.4vw,56px)/1 var(--font-sign);font-variant-numeric:tabular-nums}
+.lobby-clock span{font-size:13px;color:var(--scr-ink-2)}
+.floors{display:grid;gap:14px}
+.floor{display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px}
+.floor-l{font:700 18px/1.1 var(--font-sign);color:var(--scr-ink-2);border-right:2px solid var(--scr-line);padding-top:8px}
+.floor-rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.tile{border-radius:12px;padding:12px 14px;background:var(--scr-panel);border:1px solid var(--scr-line);display:grid;gap:5px;align-content:start;transition:background-color .7s ease,border-color .7s ease}
+.tile .tc{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.tile .tc b{font:700 28px/1 var(--font-sign)}
+.tile .tc span{font-size:12px;color:var(--scr-ink-2)}
+.tile .ts{font:700 17px/1 var(--font-sign);letter-spacing:.12em;text-transform:uppercase}
+.tile .td{font-size:13.5px;color:var(--scr-ink-2)}
+.tile.free{background:var(--scr-free-bg);border-color:var(--scr-free)}
+.tile.free .ts{color:var(--scr-free)}
+.tile.res{background:var(--scr-res-bg);border-color:var(--scr-res)}
+.tile.res .ts{color:var(--scr-res)}
+.tile.occ{background:var(--scr-occ-bg);border-color:var(--scr-occ)}
+.tile.occ .ts{color:var(--scr-occ)}
+.tile.off{background:var(--scr-off-bg)}
+.tile.off .ts{color:var(--scr-off)}
+.lobby-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--scr-ink-2);border-top:2px solid var(--scr-line);padding-top:14px}
+.lobby-foot b{color:var(--scr-ink)}
+@media (max-width:560px){
+  .lobby{padding:16px;border-width:6px}
+  .floor{grid-template-columns:1fr;gap:8px}
+  .floor-l{border-right:0;border-bottom:2px solid var(--scr-line);padding:0 0 4px}
+  .floor-rooms{grid-template-columns:1fr 1fr}
+  .tile .tc b{font-size:22px}
+}
+
+/* data */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font:700 11.5px/1.2 var(--font-mono);color:var(--ink-3);background:var(--surface-2)}
+td.mono{font-family:var(--font-mono);font-size:12px}
+tr.mine td{background:var(--accent-soft)}
+.tname{font:700 13px/1 var(--font-mono);letter-spacing:.03em;margin:4px 0 8px;color:var(--ink-2)}
+.dnote{font-size:13.5px;color:var(--ink-2);max-width:72ch}
+.log{list-style:none;margin:0;padding:0;font-size:13px;display:grid;max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.log li{display:grid;grid-template-columns:46px 62px minmax(0,1fr);gap:10px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.log li:last-child{border-bottom:0}
+.log time{font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.tag{font:700 10.5px/1.7 var(--font-mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3)}
+.tag.error{color:var(--occ)}
+.tag.sensor{color:var(--free)}
+.tag.job{color:var(--res)}
+.data-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.data-tools select{min-height:40px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);padding:0 10px}
+.test-run{font-weight:700}
+#test-csv{width:100%;min-height:90px;font:12px var(--font-mono);border:1px solid var(--line-2);border-radius:8px;padding:8px;background:var(--surface)}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="bar">
+    <div class="bar-in">
+      <div class="brand">
+        <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="3" y="3" width="22" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M9.5 14.5l3.2 3.2 6-6.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div><b>NU Campus Space</b><small>Prototype · sample data</small></div>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Screens">
+        <button class="tab tab-student" role="tab" data-act="tab" data-v="student" aria-selected="true">Student</button>
+        <button class="tab" role="tab" data-act="tab" data-v="desk" aria-selected="false"><span class="lg">Circulation </span>Desk</button>
+        <button class="tab" role="tab" data-act="tab" data-v="lobby" aria-selected="false">Lobby<span class="lg"> screen</span></button>
+        <button class="tab" role="tab" data-act="tab" data-v="data" aria-selected="false"><span class="lg">Server </span>Data</button>
+      </nav>
+      <div class="clock" aria-live="polite">
+        <span>Demo time</span><b id="bar-time">13:50</b><span id="bar-day"></span>
+        <button class="bbtn" data-act="adv" data-min="5">+5 min</button>
+        <button class="bbtn" data-act="adv" data-min="15">+15 min</button>
+      </div>
+      <details class="tools" id="tools">
+        <summary class="bbtn">Demo tools</summary>
+        <div class="tools-panel">
+          <div>
+            <h4>Quick demo</h4>
+            <ol>
+              <li>Sign in with the demo account.</li>
+              <li>Tap <b>Book 14:00–16:00</b> next to a free room.</li>
+              <li>Tap <b>Demo: scan this code at the desk</b>, or scan it in the Circulation Desk tab.</li>
+              <li>Open the Lobby screen: the room turns Occupied.</li>
+              <li>Tap <b>Finish now</b>. The room turns Free.</li>
+            </ol>
+          </div>
+          <div>
+            <h4>Clock</h4>
+            <div class="btnrow"><button class="btn sm" data-act="adv" data-min="5">+5 min</button><button class="btn sm" data-act="adv" data-min="15">+15 min</button><button class="btn sm" data-act="adv" data-min="30">+30 min</button><button class="btn sm" data-act="adv" data-min="60">+1 h</button></div>
+            <p class="small muted" style="margin-top:6px">A booking with no check-in 15 minutes after its start becomes a No-show and the room is released.</p>
+          </div>
+          <div>
+            <h4>Next booking attempt</h4>
+            <label class="check"><input type="checkbox" id="t-race"> <span>Someone else books the same time a moment earlier (error E3)</span></label>
+            <label class="check"><input type="checkbox" id="t-drop"> <span>The phone loses its connection (error E5)</span></label>
+          </div>
+          <div>
+            <h4>Desk PC</h4>
+            <label class="check"><input type="checkbox" id="t-off"> <span>Network down: scans wait on the PC and are sent later</span></label>
+          </div>
+          <div>
+            <h4>Usability test</h4>
+            <div class="btnrow" style="align-items:center">
+              <label class="small" for="t-pid">Participant</label>
+              <input id="t-pid" value="P1" size="5" style="min-height:40px;border:1px solid var(--line-2);border-radius:10px;padding:0 10px;background:var(--surface);width:80px">
+              <button class="btn sm primary" data-act="test-start">Start</button>
+              <button class="btn sm" data-act="test-start-keep">Start, keep data</button>
+              <button class="btn sm" data-act="test-end">End</button>
+            </div>
+            <p class="small muted" style="margin-top:6px"><b>Start</b> resets the demo data and starts the timer. <b>Start, keep data</b> times the next task from where the last one ended. <b>End</b> saves the times, errors and back taps in this browser.</p>
+            <div id="test-out" class="stack-sm" style="margin-top:10px"></div>
+          </div>
+          <div class="btnrow"><button class="btn sm danger" data-act="reset">Reset demo data</button></div>
+        </div>
+      </details>
+    </div>
+  </header>
+
+  <p class="intro"><b>Clickable prototype</b> of the student app, the Circulation Desk console and the lobby screen of NU Campus Space, a student course project (not an official Nazarbayev University service). Everything runs in this page with sample data: the server, database, QR scanner and room sensors are simulated, and nothing you type is sent anywhere.</p>
+
+  <main class="stage">
+    <section id="pane-student" class="pane" aria-label="Student phone">
+      <div class="phone">
+        <div class="ph-bar">
+          <span class="ph-brand"><svg viewBox="0 0 28 28" aria-hidden="true"><rect x="3" y="3" width="22" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M9.5 14.5l3.2 3.2 6-6.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Campus Space</span>
+          <div class="lang" role="group" aria-label="Language">
+            <button data-act="lang" data-l="kk" aria-pressed="false">ҚАЗ</button><button data-act="lang" data-l="ru" aria-pressed="false">РУС</button><button data-act="lang" data-l="en" aria-pressed="true">ENG</button>
+          </div>
+        </div>
+        <div class="ph-sub" id="ph-clock"></div>
+        <div class="ph-scroll" id="ph-scroll"><div id="ph-body"></div></div>
+        <nav class="ph-tabs" id="ph-tabs" aria-label="App">
+          <button data-act="nav-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4.5 20 11v9H14.5v-5.5h-5V20H4z"/></svg>Home</button>
+          <button data-act="nav-bookings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 7h11M9 12h11M9 17h11M4.5 7h.01M4.5 12h.01M4.5 17h.01"/></svg>My bookings</button>
+        </nav>
+      </div>
+    </section>
+
+    <section id="pane-desk" class="pane side" aria-label="Circulation Desk" hidden>
+      <div class="side-stack">
+        <div class="panel">
+          <div class="pane-head">
+            <div><h2>Circulation Desk</h2><p>Block 5E, floor 3 · staff console on the service-desk PC</p></div>
+            <div class="meta-row"><span class="pill" id="desk-net">Network online</span><span class="pill">Staff ST-014</span><span class="pill" id="desk-clock">13:50</span></div>
+          </div>
+          <form id="f-scan" class="scan" style="margin-top:16px" autocomplete="off">
+            <label for="in-scan">Scan the QR code or type the booking code</label>
+            <div class="scan-row"><input id="in-scan" spellcheck="false" placeholder="CS-5110-7F3A9C"><button class="btn primary" type="submit">Check in</button></div>
+            <div id="scan-result" aria-live="polite"></div>
+          </form>
+        </div>
+        <div class="cols">
+          <div class="panel"><h3>Arriving now</h3><div id="arrivals"></div></div>
+          <div class="panel"><h3>Alerts</h3><div id="alerts" class="stack-sm"></div></div>
+        </div>
+        <div class="panel">
+          <h3>Today’s group study rooms</h3>
+          <div class="gridwrap"><div id="daygrid"></div></div>
+          <p class="privacy" style="margin-top:12px">Students’ phone numbers are never shown at the desk, and booking lists cannot be exported.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="pane-lobby" class="pane side" aria-label="Lobby screen" hidden>
+      <div class="lobby" id="lobby"></div>
+    </section>
+
+    <section id="pane-data" class="pane side" aria-label="Server data" hidden>
+      <div class="panel side-stack">
+        <div class="pane-head">
+          <div><h2>Server data</h2><p>Simulated in this page: the tables the real system would keep in PostgreSQL. Rows change as you use the phone and the desk.</p></div>
+          <div class="data-tools"><label class="small strong" for="sel-viewas">View as</label>
+            <select id="sel-viewas"><option value="student">Student 202400117</option><option value="staff">Desk staff ST-014</option><option value="admin">Database administrator</option></select></div>
+        </div>
+        <div id="data-body" class="side-stack"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<noscript><p style="padding:16px">This prototype needs JavaScript to run.</p></noscript>
+
+<script>/* QR encoder (Kazuhiko Arase, MIT), bundled so the page works offline */
+(function(){var M={};function req(n){n=n.replace("./","").replace(/\.js$/,"");var m=M[n];if(!m.loaded){m.loaded=true;m.fn(m.mod,req);}return m.mod.exports;}
+M["QR8bitByte"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+var QRMode = require('./QRMode');
+
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = data;
+}
+
+QR8bitByte.prototype = {
+
+	getLength : function() {
+		return this.data.length;
+	},
+	
+	write : function(buffer) {
+		for (var i = 0; i < this.data.length; i++) {
+			// not JIS ...
+			buffer.put(this.data.charCodeAt(i), 8);
+		}
+	}
+};
+
+module.exports = QR8bitByte;
+
+}};
+M["QRBitBuffer"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+
+QRBitBuffer.prototype = {
+
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	
+	getLengthInBits : function() {
+		return this.length;
+	},
+	
+	putBit : function(bit) {
+	
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+	
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+	
+		this.length++;
+	}
+};
+
+module.exports = QRBitBuffer;
+
+}};
+M["QRErrorCorrectLevel"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};
+
+
+}};
+M["QRMaskPattern"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};
+
+}};
+M["QRMath"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+var QRMath = {
+
+	glog : function(n) {
+	
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		
+		return QRMath.LOG_TABLE[n];
+	},
+	
+	gexp : function(n) {
+	
+		while (n < 0) {
+			n += 255;
+		}
+	
+		while (n >= 256) {
+			n -= 255;
+		}
+	
+		return QRMath.EXP_TABLE[n];
+	},
+	
+	EXP_TABLE : new Array(256),
+	
+	LOG_TABLE : new Array(256)
+
+};
+	
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+
+module.exports = QRMath;
+
+}};
+M["QRMode"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};
+
+}};
+M["QRPolynomial"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+var QRMath = require('./QRMath');
+
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+
+	var offset = 0;
+
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+
+QRPolynomial.prototype = {
+
+	get : function(index) {
+		return this.num[index];
+	},
+	
+	getLength : function() {
+		return this.num.length;
+	},
+	
+	multiply : function(e) {
+	
+		var num = new Array(this.getLength() + e.getLength() - 1);
+	
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+	
+		return new QRPolynomial(num, 0);
+	},
+	
+	mod : function(e) {
+	
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+	
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+	
+		var num = new Array(this.getLength() );
+		
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+	
+		// recursive call
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+
+module.exports = QRPolynomial;
+
+}};
+M["QRRSBlock"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+var QRErrorCorrectLevel = require('./QRErrorCorrectLevel');
+
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+
+QRRSBlock.RS_BLOCK_TABLE = [
+
+	// L
+	// M
+	// Q
+	// H
+
+	// 1
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+	
+	// 2
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+
+	// 3
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+
+	// 4		
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+	
+	// 5
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+	
+	// 6
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+	
+	// 7		
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+	
+	// 8
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+	
+	// 9
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+	
+	// 10		
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+
+	// 11
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+
+	// 12
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+
+	// 13
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+
+	// 14
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+
+	// 15
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+
+	// 16
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+
+	// 17
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+
+	// 18
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+
+	// 19
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+
+	// 20
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+
+	// 21
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+
+	// 22
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+
+	// 23
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+
+	// 24
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+
+	// 25
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+
+	// 26
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+
+	// 27
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+
+	// 28
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+
+	// 29
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+
+	// 30
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+
+	// 31
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+
+	// 32
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+
+	// 33
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+
+	// 34
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+
+	// 35
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+
+	// 36
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+
+	// 37
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+
+	// 38
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+
+	// 39
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+
+	// 40
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+
+	var length = rsBlock.length / 3;
+	
+	var list = [];
+	
+	for (var i = 0; i < length; i++) {
+
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	
+	return list;
+};
+
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+
+module.exports = QRRSBlock;
+
+}};
+M["QRUtil"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+var QRMode = require('./QRMode');
+var QRPolynomial = require('./QRPolynomial');
+var QRMath = require('./QRMath');
+var QRMaskPattern = require('./QRMaskPattern');
+
+var QRUtil = {
+
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+
+    getBCHDigit : function(data) {
+
+        var digit = 0;
+
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+
+        return digit;
+    },
+
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+
+    getMask : function(maskPattern, i, j) {
+        
+        switch (maskPattern) {
+            
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+
+        var a = new QRPolynomial([1], 0);
+
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+
+        return a;
+    },
+
+    getLengthInBits : function(mode, type) {
+
+        if (1 <= type && type < 10) {
+
+            // 1 - 9
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 27) {
+
+            // 10 - 26
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 41) {
+
+            // 27 - 40
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+
+    getLostPoint : function(qrCode) {
+        
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+
+        
+        // LEVEL1
+        
+        for (row = 0; row < moduleCount; row++) {
+
+            for (col = 0; col < moduleCount; col++) {
+
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+
+                for (var r = -1; r <= 1; r++) {
+
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+
+                    for (var c = -1; c <= 1; c++) {
+
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+
+        // LEVEL2
+
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+
+        // LEVEL3
+
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        // LEVEL4
+        
+        var darkCount = 0;
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+
+        return lostPoint;       
+    }
+
+};
+
+module.exports = QRUtil;
+
+}};
+M["index"]={loaded:false,mod:{exports:{}},fn:function(module,require){var exports=module.exports;
+//---------------------------------------------------------------------
+// QRCode for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//   http://www.opensource.org/licenses/mit-license.php
+//
+// The word "QR Code" is registered trademark of 
+// DENSO WAVE INCORPORATED
+//   http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+// Modified to work in node for this project (and some refactoring)
+//---------------------------------------------------------------------
+
+var QR8bitByte = require('./QR8bitByte');
+var QRUtil = require('./QRUtil');
+var QRPolynomial = require('./QRPolynomial');
+var QRRSBlock = require('./QRRSBlock');
+var QRBitBuffer = require('./QRBitBuffer');
+
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+
+QRCode.prototype = {
+	
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	
+	make : function() {
+		// Calculate automatically typeNumber if provided is < 1
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	
+	makeImpl : function(test, maskPattern) {
+		
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		
+		for (var row = 0; row < this.moduleCount; row++) {
+			
+			this.modules[row] = new Array(this.moduleCount);
+			
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+	
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+	
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+	
+		this.mapData(this.dataCache, maskPattern);
+	},
+
+	setupPositionProbePattern : function(row, col)  {
+		
+		for (var r = -1; r <= 7; r++) {
+			
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			
+			for (var c = -1; c <= 7; c++) {
+				
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	
+	getBestMaskPattern : function() {
+	
+		var minLostPoint = 0;
+		var pattern = 0;
+	
+		for (var i = 0; i < 8; i++) {
+			
+			this.makeImpl(true, i);
+	
+			var lostPoint = QRUtil.getLostPoint(this);
+	
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+	
+		return pattern;
+	},
+	
+	createMovieClip : function(target_mc, instance_name, depth) {
+	
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+	
+		this.make();
+
+		for (var row = 0; row < this.modules.length; row++) {
+			
+			var y = row * cs;
+			
+			for (var col = 0; col < this.modules[row].length; col++) {
+	
+				var x = col * cs;
+				var dark = this.modules[row][col];
+			
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		
+		return qr_mc;
+	},
+
+	setupTimingPattern : function() {
+		
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+	
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	
+	setupPositionAdjustPattern : function() {
+	
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		
+		for (var i = 0; i < pos.length; i++) {
+		
+			for (var j = 0; j < pos.length; j++) {
+			
+				var row = pos[i];
+				var col = pos[j];
+				
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				
+				for (var r = -2; r <= 2; r++) {
+				
+					for (var c = -2; c <= 2; c++) {
+					
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	
+	setupTypeNumber : function(test) {
+	
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+	
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+	
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	
+	setupTypeInfo : function(test, maskPattern) {
+	
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+	
+		// vertical		
+		for (var v = 0; v < 15; v++) {
+	
+			mod = (!test && ( (bits >> v) & 1) === 1);
+	
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+	
+		// horizontal
+		for (var h = 0; h < 15; h++) {
+	
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+	
+		// fixed module
+		this.modules[this.moduleCount - 8][8] = (!test);
+	
+	},
+	
+	mapData : function(data, maskPattern) {
+		
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+	
+			if (col === 6) col--;
+	
+			while (true) {
+	
+				for (var c = 0; c < 2; c++) {
+					
+					if (this.modules[row][col - c] === null) {
+						
+						var dark = false;
+	
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+	
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+	
+						if (mask) {
+							dark = !dark;
+						}
+						
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+	
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+								
+				row += inc;
+	
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+		
+	}
+
+};
+
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	
+	var buffer = new QRBitBuffer();
+	
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+
+	// calc num max data.
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+
+	// end code
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+
+	// padding
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+
+	// padding
+	while (true) {
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+
+QRCode.createBytes = function(buffer, rsBlocks) {
+
+	var offset = 0;
+	
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	
+	for (var r = 0; r < rsBlocks.length; r++) {
+
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		
+		dcdata[r] = new Array(dcCount);
+		
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+
+	}
+	
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+
+	var data = new Array(totalCodeCount);
+	var index = 0;
+
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+
+	return data;
+
+};
+
+module.exports = QRCode;
+
+}};
+var QRCode=req("index");var ECL=req("QRErrorCorrectLevel");window.qrcode=function(t,e){return new QRCode(t,ECL[e]);};})();
+</script>
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- rules from the course project ---------- */
+const LIMIT = 180;          // 3 h of group-room bookings per student per day
+const BEFORE = 10;          // check-in opens 10 min before the start
+const AFTER = 15;           // no check-in 15 min after the start -> No-show
+const DEMO_USER = '202400117', DEMO_PW = 'library-5E-2026', STAFF = 'ST-014';
+const KEY = 'nucs-proto-v2', TKEY = 'nucs-tests-v1';
+const VIEWS = ['student', 'desk', 'lobby', 'data'];
+const ROOMS = [
+  {code:'5E240', floor:2, seats:4}, {code:'5E241', floor:2, seats:6}, {code:'5E242', floor:2, seats:3},
+  {code:'5E333', floor:3, seats:6}, {code:'5E336', floor:3, seats:5}, {code:'5E337', floor:3, seats:4},
+  {code:'5E421', floor:4, seats:5},
+];
+const STUDENTS = {
+  '202400117': {first:'Aigerim', last:'Sample', phone:'+7 701 555 0117'},
+  '202500342': {first:'Daniyar', last:'Example', phone:'+7 702 555 0342'},
+  '202300581': {first:'Kamila', last:'Testova'},
+  '202600214': {first:'Nurlan', last:'Mockov'},
+  '202500766': {first:'Zarina', last:'Demova'},
+  '202400893': {first:'Timur', last:'Mockup'},
+};
+const ACTIVE = ['Booked', 'Checked in', 'Finished'];
+
+/* ---------- time helpers (Astana, UTC+5) ---------- */
+const astanaDate = () => new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 10);
+const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const weekday = (iso) => new Date(iso + 'T00:00:00Z').getUTCDay();
+const hoursOf = (iso) => { const w = weekday(iso); return (w === 0 || w === 6) ? [600, 1080] : [540, 1140]; };
+const DF = new Intl.DateTimeFormat('en-GB', {weekday:'short', day:'numeric', month:'short', timeZone:'UTC'});
+const dateLong = (iso) => DF.format(new Date(iso + 'T00:00:00Z')).replace(',', '');
+const hm = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+const range = (a, b) => hm(a) + '–' + hm(b);
+const dur = (m) => { const h = Math.floor(m / 60), r = m % 60; return h && r ? `${h} h ${r} min` : h ? `${h} h` : `${r} min`; };
+const ceil30 = (m) => Math.ceil(m / 30) * 30;
+const dayName = (iso) => iso === S.today ? 'Today' : iso === addDays(S.today, 1) ? 'Tomorrow' : dateLong(iso);
+const dayPhrase = (iso) => iso === S.today ? 'today' : iso === addDays(S.today, 1) ? 'tomorrow' : 'on ' + dateLong(iso);
+const dayFull = (iso) => { const n = dayName(iso), l = dateLong(iso); return n === l ? l : n + ', ' + l; };
+const people = (n) => n + (n === 1 ? ' person' : ' people');
+
+function rng(str){
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++){ h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+  return () => { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+}
+const randHex = (n) => Array.from(crypto.getRandomValues(new Uint8Array(n))).map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+const seedCode = (id) => ((Math.imul(id, 2654435761) >>> 0).toString(16).toUpperCase() + '000000').slice(0, 6);
+const qrText = (b) => `CS-${b.id}-${b.code}`;
+
+/* ---------- state ---------- */
+let S = null, gen = 0, SUGG = [];
+
+function bk(id, student, room, date, start, end, size, status, code){
+  return {id, student, room, date, start, end, size, status, code: code || seedCode(id)};
+}
+function seed(){
+  gen++;
+  const today = astanaDate();
+  S = {
+    v: 2, today, now: 13 * 60 + 50,
+    bookings: [], checkins: [], sensors: {}, closed: {}, handled: {}, log: [],
+    nextId: 5110, nextCi: 9004,
+    user: null, login: {id: DEMO_USER, pw: DEMO_PW, fails: 0, lockedUntil: null, error: null, forgot: false},
+    screen: 'signin', stack: [], search: null, searchErr: null, sel: null, selMsg: null,
+    pending: null, err: null, detailId: null, justBooked: null, ask: null, flash: null, notices: [],
+    demo: {race: false, drop: false, offline: false}, desk: {result: null, queue: []},
+    ui: {view: 'student', side: 'desk', viewAs: 'staff', askClear: false}, test: null,
+  };
+  const B = S.bookings;
+  // Sample rows from Assignment 3, Table 4 (history)
+  B.push(bk(5001, '202400117', '5E333', '2026-10-19', 840, 960, 4, 'Finished', '7F3A9C'));
+  B.push(bk(5002, '202500342', '5E240', '2026-10-19', 600, 690, 3, 'No-show', 'B21E04'));
+  B.push(bk(5003, '202400117', '5E421', '2026-10-20', 540, 600, 3, 'Cancelled', '4C8D11'));
+  B.push(bk(5004, '202300581', '5E336', '2026-10-21', 900, 1080, 5, 'Finished', '9E5B72'));
+  B.push(bk(5005, '202600214', '5E241', '2026-10-22', 660, 750, 3, 'Finished', 'D03F6A'));
+  // Today at 13:50
+  B.push(bk(5101, '202500342', '5E240', today, 750, 840, 3, 'Checked in'));
+  B.push(bk(5102, '202300581', '5E241', today, 780, 960, 5, 'Checked in'));
+  B.push(bk(5103, '202600214', '5E336', today, 840, 930, 4, 'Booked'));
+  B.push(bk(5104, '202500766', '5E333', today, 960, 1080, 6, 'Booked'));
+  B.push(bk(5105, '202500342', '5E337', today, 960, 1050, 4, 'Booked'));
+  B.push(bk(5106, '202400893', '5E421', today, 600, 690, 3, 'No-show'));
+  B.push(bk(5107, '202600214', '5E240', today, 990, 1080, 3, 'Booked'));
+  B.push(bk(5108, '202400893', '5E421', today, 1020, 1080, 4, 'Booked'));
+  B.push(bk(5109, '202500766', '5E242', today, 660, 720, 3, 'Finished'));
+  S.checkins.push({id: 9001, booking: 5101, staff: STAFF, inAt: 754, outAt: null});
+  S.checkins.push({id: 9002, booking: 5102, staff: STAFF, inAt: 785, outAt: null});
+  S.checkins.push({id: 9003, booking: 5109, staff: STAFF, inAt: 663, outAt: 720});
+  S.sensors = {'5E240': 3, '5E241': 5, '5E242': 2};
+  let fid = 7001;
+  for (let d = 1; d <= 6; d++){
+    const date = addDays(today, d), [o, c] = hoursOf(date), r = rng(date);
+    for (const room of ROOMS){
+      let t = o + 30 * Math.floor(r() * 4);
+      while (t <= c - 60){
+        if (r() < 0.5){
+          const end = Math.min(c, t + 60 + 30 * Math.floor(r() * 4));
+          B.push(bk(fid++, '2025' + String(10000 + Math.floor(r() * 89999)), room.code, date, t, end, Math.min(room.seats, 3 + Math.floor(r() * 3)), 'Booked'));
+          t = end + 30 * Math.floor(r() * 3);
+        } else t += 60;
+      }
+    }
+  }
+  S.search = defaultSearch();
+  logEv('job', 'Demo data loaded: the 7 group study rooms in block 5E, with sample bookings for today and the next 6 days.');
+  logEv('sensor', 'Simulated FP2 sensors: 5E240 occupied, 3 people · 5E241 occupied, 5 people · 5E242 occupied, 2 people (no booking)');
+}
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s || s.v !== 2 || s.today !== astanaDate()) return false;
+    S = s; return true;
+  } catch (e){ return false; }
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e){} }
+function loadTests(){ try { return JSON.parse(localStorage.getItem(TKEY) || '[]'); } catch (e){ return []; } }
+function saveTests(a){ try { localStorage.setItem(TKEY, JSON.stringify(a)); } catch (e){} }
+
+function track(type, text){ if (S.test && S.test.running) S.test.events.push({ms: Date.now() - S.test.t0, type, text}); }
+function logEv(type, text){ S.log.push({t: S.now, type, text}); if (S.log.length > 400) S.log.splice(0, S.log.length - 400); track(type, text); }
+
+/* ---------- queries ---------- */
+const roomBy = (code) => ROOMS.find((r) => r.code === code);
+const byId = (id) => S.bookings.find((b) => b.id === Number(id));
+const isClosed = (room, date) => (S.closed[room] || []).includes(date);
+const blocking = (room, date) => S.bookings.filter((b) => b.room === room && b.date === date && ACTIVE.includes(b.status));
+const overlaps = (room, date, a, b) => blocking(room, date).find((x) => x.start < b && a < x.end);
+const usedMin = (stu, date) => S.bookings.filter((b) => b.student === stu && b.date === date && ACTIVE.includes(b.status)).reduce((t, b) => t + (b.end - b.start), 0);
+const leftMin = (stu, date) => Math.max(0, LIMIT - usedMin(stu, date));
+const stuName = (id, short) => { const s = STUDENTS[id]; if (!s) return 'Student ' + id; return short ? s.first + ' ' + s.last[0] + '.' : s.first + ' ' + s.last; };
+const nextStartToday = () => Math.max(hoursOf(S.today)[0], ceil30(S.now));
+function rangeFree(room, date, a, b){
+  const [o, c] = hoursOf(date);
+  if (a < o || b > c || b <= a) return false;
+  if (date < S.today || (date === S.today && a < S.now)) return false;
+  if (isClosed(room, date)) return false;
+  return !overlaps(room, date, a, b);
+}
+const fitSort = (size) => (a, b) => (a.seats - size) - (b.seats - size) || a.code.localeCompare(b.code);
+
+function defaultSearch(){
+  let date = S.today, start = nextStartToday();
+  if (start > hoursOf(date)[1] - 30){ date = addDays(S.today, 1); start = Math.max(hoursOf(date)[0], 840); }
+  return {date, start, len: 120, size: 4};   // survey: most groups book 2 h for 4 people
+}
+function minStart(date){ const [o] = hoursOf(date); return date === S.today ? Math.max(o, ceil30(S.now)) : o; }
+function normSearch(){
+  const q = S.search;
+  if (q.date < S.today) q.date = S.today;
+  const [, c] = hoursOf(q.date);
+  if (q.start < minStart(q.date)) q.start = minStart(q.date);
+  if (q.start > c - 30){
+    if (q.date === S.today){ q.date = addDays(S.today, 1); q.start = Math.max(hoursOf(q.date)[0], 840); }
+    else q.start = c - 30;
+  }
+}
+function findRooms(q){
+  const end = q.start + q.len, fit = [], other = [];
+  for (const r of ROOMS){
+    if (isClosed(r.code, q.date)){ other.push({r, why: 'Closed ' + dayPhrase(q.date) + ' for maintenance'}); continue; }
+    if (r.seats < q.size){ other.push({r, why: `${r.seats} seats, too small for ${q.size}`}); continue; }
+    const x = overlaps(r.code, q.date, q.start, end);
+    if (x){ other.push({r, why: 'Booked ' + range(x.start, x.end)}); continue; }
+    fit.push(r);
+  }
+  fit.sort(fitSort(q.size));
+  return {fit, other};
+}
+function suggestions(q){
+  const out = [], [o, c] = hoursOf(q.date), ms = minStart(q.date);
+  const count = (x) => findRooms(x).fit.length;
+  for (let t = q.start + 30; t + q.len <= c; t += 30){ const n = count({...q, start: t}); if (n){ out.push({...q, start: t, n}); break; } }
+  for (let L = q.len - 30; L >= 60; L -= 30){ const n = count({...q, len: L}); if (n){ out.push({...q, len: L, n}); break; } }
+  for (let t = q.start - 30; t >= ms; t -= 30){ const n = count({...q, start: t}); if (n){ out.push({...q, start: t, n}); break; } }
+  const d2 = addDays(q.date, 1), [o2, c2] = hoursOf(d2);
+  if (q.start >= o2 && q.start + q.len <= c2){ const n = count({...q, date: d2}); if (n) out.push({...q, date: d2, n}); }
+  return out.slice(0, 3);
+}
+function roomNow(code){
+  const [o, c] = hoursOf(S.today), ppl = S.sensors[code] || 0;
+  if (isClosed(code, S.today)) return {st: 'Closed', cls: 'off', detail: 'Maintenance today'};
+  if (S.now < o || S.now >= c) return {st: 'Closed', cls: 'off', detail: S.now < o ? 'Opens ' + hm(o) : 'Closed for today'};
+  const list = blocking(code, S.today);
+  const inUse = list.find((b) => b.status === 'Checked in');
+  if (inUse) return {st: 'Occupied', cls: 'occ', detail: 'until ' + hm(inUse.end) + (ppl ? ' · ' + people(ppl) : ''), ppl};
+  if (ppl > 0) return {st: 'Occupied', cls: 'occ', detail: 'No booking · ' + people(ppl), ppl, walkin: true};
+  const res = list.find((b) => b.status === 'Booked' && S.now >= b.start - BEFORE && S.now < b.start + AFTER);
+  if (res) return {st: 'Reserved', cls: 'res', detail: range(res.start, res.end) + ' · check-in by ' + hm(res.start + AFTER)};
+  const next = list.filter((b) => b.status === 'Booked' && b.start > S.now).sort((a, b) => a.start - b.start)[0];
+  return {st: 'Free', cls: 'free', detail: 'until ' + hm(next ? next.start : c)};
+}
+
+/* ---------- step 4: the booking transaction ---------- */
+function tryBook(req){
+  const dup = S.bookings.find((b) => b.code === req.code);
+  if (dup) return {booking: dup, repeated: true};      // Try again after E5 never makes a second booking
+  const room = roomBy(req.room), [o, c] = hoursOf(req.date);
+  if (isClosed(req.room, req.date)) return {error: 'X', text: `${req.room} is closed ${dayPhrase(req.date)} for maintenance.`};
+  if (req.start % 30 || req.end % 30 || req.end <= req.start || req.start < o || req.end > c) return {error: 'X', text: `Rooms can be booked ${range(o, c)} on this day, in half-hour steps.`};
+  if (req.date < S.today || (req.date === S.today && req.start < S.now)) return {error: 'X', text: 'This time has already started. Choose a later time.'};
+  if (req.size < 3 || req.size > room.seats) return {error: 'X', text: `${req.room} seats ${room.seats}. Group study rooms are for 3 to 6 people.`};
+  if (S.demo.race){
+    S.demo.race = false;
+    const other = bk(S.nextId++, '202501234', req.room, req.date, req.start, req.end, req.size, 'Booked', randHex(3));
+    S.bookings.push(other);
+    logEv('db', `Another student committed BOOKING ${other.id} for ${req.room} ${range(req.start, req.end)} a moment earlier`);
+  }
+  if (overlaps(req.room, req.date, req.start, req.end)) return {error: 'E3'};
+  const used = usedMin(S.user, req.date);
+  if (used + (req.end - req.start) > LIMIT) return {error: 'E6', used, left: Math.max(0, LIMIT - used)};
+  const b = bk(S.nextId++, S.user, req.room, req.date, req.start, req.end, req.size, 'Booked', req.code);
+  S.bookings.push(b);
+  logEv('db', `BEGIN; INSERT BOOKING ${b.id} (${b.room}, ${dateLong(b.date)} ${range(b.start, b.end)}, request ${b.code}) and ${b.size} BOOKING_MEMBER rows; COMMIT`);
+  return {booking: b};
+}
+function submitBooking(req){
+  S.sel = {room: req.room, date: req.date, start: req.start, end: req.end, size: req.size};
+  track('tap-book', `${req.room} ${range(req.start, req.end)}`);
+  if (S.demo.drop){
+    S.demo.drop = false; S.pending = req; S.err = {kind: 'E5', req};
+    logEv('error', `E5 No connection: booking ${req.room} ${range(req.start, req.end)} not sent, choices kept`);
+    return go('error');
+  }
+  const r = tryBook(req);
+  if (r.error === 'E3'){ S.err = {kind: 'E3', req}; logEv('error', `E3 ${req.room} ${range(req.start, req.end)} was taken a moment earlier`); return go('error'); }
+  if (r.error === 'E6'){ S.err = {kind: 'E6', req, used: r.used, left: r.left}; logEv('error', `E6 Over the 3-hour daily limit (${dur(r.left)} left)`); return go('error'); }
+  if (r.error){ S.err = {kind: 'X', req, text: r.text}; logEv('error', 'Booking refused: ' + r.text); return go('error'); }
+  S.pending = null; S.err = null; S.detailId = r.booking.id; S.justBooked = r.booking.id;
+  track('booked', `${r.booking.room} ${range(r.booking.start, r.booking.end)}`);
+  go('booking', {stack: ['home'], flash: r.repeated ? 'Your booking was already saved, so nothing was booked twice.' : null});
+}
+
+/* ---------- desk: step 5 ---------- */
+let actx = null;
+function beep(){
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'square'; o.frequency.value = 330; g.gain.value = 0.05;
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime + 0.35);
+  } catch (e){}
+}
+function deskScan(raw){
+  const code = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!code) return null;
+  if (S.demo.offline){
+    S.desk.queue.push({code, at: S.now});
+    S.desk.result = {k: 'queued', title: 'Saved on this PC', text: `No network. The check-in for ${code} waits in the local queue on this PC and is sent with its scan time (${hm(S.now)}) when the network is back.`};
+    logEv('desk', `Scan ${code} saved in the offline queue`);
+    save(); render();
+    return S.desk.result;
+  }
+  const res = processCheckIn(code, S.now, false);
+  S.desk.result = res; save(); render();
+  return res;
+}
+function processCheckIn(code, at, queued){
+  const b = S.bookings.find((x) => qrText(x) === code || x.code === code);
+  const bad = (title, text) => { beep(); logEv('desk', `Scan ${code}: ${title}`); return {k: 'err', title, text}; };
+  if (!b) return bad('Code not recognised', 'This is not a booking code. Check the student’s NU ID card and find the booking under Arriving now.');
+  if (b.date !== S.today) return bad('Wrong day', `This booking is for ${dateLong(b.date)}, ${range(b.start, b.end)}.`);
+  if (b.status === 'Checked in'){ const ci = S.checkins.find((c) => c.booking === b.id); return {k: 'info', title: 'Already checked in', text: `${b.room} · ${range(b.start, b.end)} · checked in at ${hm(ci ? ci.inAt : b.start)}.`}; }
+  if (b.status === 'Cancelled') return bad('Booking cancelled', `The student cancelled ${b.room} ${range(b.start, b.end)}.`);
+  if (b.status === 'Finished') return bad('Booking finished', `${b.room} ${range(b.start, b.end)} has already finished.`);
+  if (b.status === 'No-show'){
+    if (queued && at <= b.start + AFTER){ b.status = 'Booked'; S.notices = S.notices.filter((n) => n.id !== b.id); logEv('desk', `Queued scan from ${hm(at)} arrived: No-show of booking ${b.id} reversed`); }
+    else return bad('Check-in window missed', `Nobody checked in by ${hm(b.start + AFTER)}, so the booking was cancelled and ${b.room} was released.`);
+  }
+  if (at < b.start - BEFORE) return bad('Too early', `Check-in for ${b.room} ${range(b.start, b.end)} opens at ${hm(b.start - BEFORE)}.`);
+  b.status = 'Checked in';
+  S.checkins.push({id: S.nextCi++, booking: b.id, staff: STAFF, inAt: at, outAt: null});
+  logEv('db', `INSERT CHECK_IN for booking ${b.id} by ${STAFF} at ${hm(at)}; BOOKING ${b.id} status = Checked in`);
+  if (b.student === S.user) track('checkin-user', b.room);
+  setSensor(b.room, Math.min(b.size, 5), 1500);
+  return {k: 'ok', title: `Checked in · ${b.room}`, text: `${range(b.start, b.end)} · ${stuName(b.student, true)} · ${people(b.size)} · room is theirs until ${hm(b.end)}`};
+}
+function setOffline(off){
+  S.demo.offline = off;
+  logEv('desk', off ? 'Desk PC lost the network' : 'Desk PC is back online');
+  if (!off && S.desk.queue.length){
+    const q = S.desk.queue.splice(0);
+    const res = q.map((it) => processCheckIn(it.code, it.at, true));
+    const ok = res.filter((r) => r.k === 'ok').length;
+    S.desk.result = {k: ok === res.length ? 'ok' : 'info', title: `Sent ${res.length} saved check-in${res.length > 1 ? 's' : ''}`, text: res.map((r) => r.k === 'ok' ? r.title : `${r.title}: ${r.text}`).join(' · ')};
+  }
+  save(); render();
+}
+function setSensor(room, n, delay){
+  const g = gen;
+  setTimeout(() => {
+    if (g !== gen || (S.sensors[room] || 0) === n) return;
+    S.sensors[room] = n;
+    if (!n) delete S.handled[room];
+    logEv('sensor', `Simulated FP2 sensor in ${room}: ${n ? 'occupied, ' + people(n) : 'empty'}`);
+    save(); render();
+  }, delay);
+}
+function clearSensor(room){ if (S.sensors[room]){ S.sensors[room] = 0; logEv('sensor', `Simulated FP2 sensor in ${room}: empty`); } }
+
+/* ---------- step 6 and other student actions ---------- */
+function finishBooking(id){
+  const b = byId(id); if (!b || b.status !== 'Checked in') return;
+  const newEnd = Math.min(b.end, Math.max(b.start + 30, ceil30(S.now)));
+  const back = b.end - newEnd;
+  b.end = newEnd; b.status = 'Finished';
+  const ci = S.checkins.find((c) => c.booking === b.id); if (ci) ci.outAt = S.now;
+  logEv('db', `BOOKING ${b.id} status = Finished, end_time = ${hm(newEnd)}; CHECK_IN checked_out_at = ${hm(S.now)}`);
+  track('finish-user', b.room);
+  clearSensor(b.room);
+  const msg = back > 0 ? `Finished. ${b.room} now shows as free, and ${dur(back)} went back to today’s booking time.` : `Finished. ${b.room} now shows as free.`;
+  S.detailId = b.id;
+  go('booking', {flash: msg, stack: ['home']});
+}
+function cancelBooking(id){
+  const b = byId(id); if (!b || b.status !== 'Booked') return;
+  b.status = 'Cancelled';
+  logEv('db', `BOOKING ${b.id} status = Cancelled by the student; ${b.room} ${range(b.start, b.end)} is free again`);
+  track('cancel-user', b.room);
+  go('bookings', {flash: `Cancelled ${b.room}, ${dayPhrase(b.date)} ${range(b.start, b.end)}. ${dur(b.end - b.start)} went back to your booking time, and the room is free for others.`, stack: ['home']});
+}
+
+/* ---------- clock and background jobs ---------- */
+function runJobs(){
+  for (const b of S.bookings){
+    if (b.date !== S.today) continue;
+    if (b.status === 'Booked' && S.now >= b.start + AFTER){
+      b.status = 'No-show';
+      logEv('job', `No-show job: booking ${b.id} (${b.room}, ${range(b.start, b.end)}) had no check-in by ${hm(b.start + AFTER)}. Status No-show, room released.`);
+      if (b.student === S.user){ S.notices.push({kind: 'E4', id: b.id}); logEv('error', `E4 Missed check-in window for ${b.room} ${range(b.start, b.end)}`); }
+    }
+    if (b.status === 'Checked in' && S.now >= b.end){
+      b.status = 'Finished';
+      const ci = S.checkins.find((c) => c.booking === b.id); if (ci && ci.outAt == null) ci.outAt = b.end;
+      logEv('job', `Booking ${b.id} (${b.room}) reached its end time ${hm(b.end)}. Status Finished.`);
+      clearSensor(b.room);
+    }
+  }
+  if (S.login.lockedUntil != null && S.now >= S.login.lockedUntil){ S.login.lockedUntil = null; S.login.fails = 0; if (S.login.error === 'locked') S.login.error = null; }
+}
+function advance(min){
+  const target = Math.min(S.now + min, 23 * 60 + 55);
+  while (S.now < target){ S.now = Math.min(target, S.now + 5); runJobs(); }
+  logEv('clock', 'Demo clock moved to ' + hm(S.now));
+  save(); render();
+}
+
+/* ---------- navigation ---------- */
+const mqWide = window.matchMedia('(min-width: 1080px)');
+function go(screen, o = {}){
+  if (o.stack) S.stack = o.stack.slice();
+  else if (o.reset) S.stack = [];
+  else if (S.screen !== screen){ S.stack.push(S.screen); if (S.stack.length > 20) S.stack.shift(); }
+  if (screen !== 'booking') S.justBooked = null;
+  S.screen = screen; S.flash = o.flash || null; S.ask = null; S.selMsg = null; S.searchErr = o.searchErr || null;
+  track('nav', screen);
+  save(); render(); toTop();
+}
+function back(){
+  const prev = S.stack.pop() || (S.user ? 'home' : 'signin');
+  S.screen = prev; S.flash = null; S.ask = null; S.selMsg = null; S.justBooked = null;
+  track('back', prev);
+  save(); render(); toTop();
+}
+function toTop(){
+  const sc = $('#ph-scroll');
+  if (mqWide.matches){ if (sc) sc.scrollTop = 0; }
+  else if (S.ui.view === 'student'){
+    const p = $('#pane-student'), y = p.getBoundingClientRect().top + window.scrollY - 70;
+    if (window.scrollY > y) window.scrollTo(0, y);
+  }
+  if (S.screen === 'room'){
+    const el = $('#ph-body .slot.chosen') || $('#ph-body button.slot');
+    if (!el) return;
+    if (mqWide.matches && sc) sc.scrollTop = Math.max(0, el.offsetTop - 160);
+    else if (!mqWide.matches){ const y = el.getBoundingClientRect().top + window.scrollY - 200; if (y > window.scrollY) window.scrollTo(0, y); }
+  }
+}
+function applyPanes(){
+  const wide = mqWide.matches;
+  $('#pane-student').hidden = wide ? false : S.ui.view !== 'student';
+  for (const p of ['desk', 'lobby', 'data']) $('#pane-' + p).hidden = wide ? S.ui.side !== p : S.ui.view !== p;
+  $$('.tab').forEach((t) => t.setAttribute('aria-selected', String(wide ? t.dataset.v === S.ui.side : t.dataset.v === S.ui.view)));
+}
+function fromHash(){
+  const h = location.hash.slice(1);
+  if (VIEWS.includes(h)){ S.ui.view = h; if (h !== 'student') S.ui.side = h; }
+  applyPanes();
+}
+
+/* ---------- rendering: student phone ---------- */
+const sizeOptions = (v, max) => { let h = ''; for (let n = 3; n <= max; n++) h += `<option value="${n}"${n === v ? ' selected' : ''}>${n} people</option>`; return h; };
+const lenOptions = (v) => { let h = ''; for (let m = 30; m <= 180; m += 30) h += `<option value="${m}"${m === v ? ' selected' : ''}>${dur(m)}</option>`; return h; };
+function dateOptions(v){ let h = ''; for (let d = 0; d <= 6; d++){ const iso = addDays(S.today, d); h += `<option value="${iso}"${iso === v ? ' selected' : ''}>${esc(dayFull(iso))}</option>`; } return h; }
+function startOptions(date, v){ const [, c] = hoursOf(date); let h = ''; for (let t = minStart(date); t <= c - 30; t += 30) h += `<option value="${t}"${t === v ? ' selected' : ''}>${hm(t)}</option>`; return h; }
+
+function qrSvg(text){
+  try {
+    if (typeof window.qrcode !== 'function') throw new Error('no qr');
+    const q = window.qrcode(0, 'M'); q.addData(text); q.make();
+    const n = q.getModuleCount(), m = 4; let d = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+    return `<svg class="qr" viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" role="img" aria-label="QR code for ${esc(text)}" shape-rendering="crispEdges"><rect class="qb" width="${n + 2 * m}" height="${n + 2 * m}"/><path class="qf" d="${d}"/></svg>`;
+  } catch (e){
+    return `<div class="qr-missing">The QR image could not load. The desk can type the code below instead.</div>`;
+  }
+}
+function noticesHtml(){
+  return S.notices.map((n, i) => {
+    const b = byId(n.id); if (!b) return '';
+    return `<div class="err stack-sm" role="alert"><p class="m0"><span class="ecode">E4</span> <b>Missed check-in</b></p>
+      <p class="m0">Nobody checked in to ${b.room}, ${dayPhrase(b.date)} ${range(b.start, b.end)}, by ${hm(b.start + AFTER)}. The booking was cancelled and the room was released for other students.</p>
+      <div class="btnrow"><button class="btn sm primary" data-act="again" data-id="${b.id}">Book again</button><button class="btn sm" data-act="notice-x" data-i="${i}">Dismiss</button></div></div>`;
+  }).join('');
+}
+function nextCard(b){
+  if (b.status === 'Checked in') return `<div class="card stack-sm"><div class="row-between"><span class="code">${b.room}</span><span class="st free">Checked in</span></div>
+    <p class="m0">${range(b.start, b.end)} · ${people(b.size)} · yours until ${hm(b.end)}</p>
+    <button class="btn block" data-act="detail" data-id="${b.id}">Open booking · finish when you leave</button></div>`;
+  const open = S.now >= b.start - BEFORE;
+  return `<div class="card stack-sm"><div class="row-between"><span class="code">${b.room}</span><span class="st res">Booked</span></div>
+    <p class="m0">${dayName(b.date)} · ${range(b.start, b.end)} · ${people(b.size)}</p>
+    <p class="m0 small${open ? ' strong' : ''}">Check in at the Circulation Desk ${range(b.start - BEFORE, b.start + AFTER)}${open ? ' · open now' : ''}</p>
+    <button class="btn primary block" data-act="detail" data-id="${b.id}">Show QR code</button></div>`;
+}
+function scrSignin(){
+  const L = S.login, locked = L.lockedUntil != null && S.now < L.lockedUntil;
+  let err = '';
+  if (locked) err = `Sign-in is locked until ${hm(L.lockedUntil)} after 5 wrong attempts. If you forgot your password, use “Forgot password?” below.`;
+  else if (L.error === 'wrong') err = `NU ID or password is incorrect. After 5 wrong attempts sign-in is locked for 15 minutes. <span class="muted">(${5 - L.fails} ${5 - L.fails === 1 ? 'attempt' : 'attempts'} left)</span>`;
+  return `<div class="stack-xs"><h1 class="h1">Sign in</h1><p class="sub">Book a group study room in block 5E and check in with a QR code.</p></div>
+    <p class="note"><b>Prototype.</b> Use the demo account below. Do not type your real NU password here.</p>
+    <form id="f-signin" class="stack" novalidate autocomplete="off">
+      <div class="field"><label for="in-id">NU ID</label><input id="in-id" inputmode="numeric" autocomplete="off" spellcheck="false" value="${esc(L.id)}"></div>
+      <div class="field"><label for="in-pw">Password</label><input id="in-pw" type="password" autocomplete="off" value="${esc(L.pw)}"></div>
+      ${err ? `<p class="err" role="alert"><span class="ecode">E1</span> ${err}</p>` : ''}
+      <button class="btn primary block" type="submit"${locked ? ' disabled' : ''}>Sign in</button>
+    </form>
+    <p class="small muted">Demo account: NU ID <code>202400117</code>, password <code>${DEMO_PW}</code></p>
+    <div class="stack-xs"><button class="linkbtn" data-act="forgot" aria-expanded="${L.forgot}" style="justify-self:start">Forgot password?</button>
+    ${L.forgot ? `<p class="small muted">In the real system, a single-use link valid for 30 minutes goes to your NU e-mail only. That e-mail comes from no-reply@nu.edu.kz right after you ask, greets you by your first name and never asks for a password or a code. The prototype sends nothing.</p>` : ''}</div>`;
+}
+function scrHome(){
+  normSearch();
+  const q = S.search, stu = STUDENTS[S.user], [, c] = hoursOf(S.today);
+  let h = `<div class="hello"><div><p class="eyebrow">${esc(stu.first + ' ' + stu.last)} · ${S.user}</p>
+    <p class="left-time"><b>${dur(leftMin(S.user, S.today))}</b><span>Booking time left today</span></p></div>
+    <button class="linkbtn small" data-act="signout">Sign out</button></div>`;
+  h += noticesHtml();
+  const mine = S.bookings.filter((b) => b.student === S.user && b.date === S.today && (b.status === 'Booked' || b.status === 'Checked in')).sort((a, b) => a.start - b.start);
+  if (mine.length) h += `<section class="stack-sm"><h2 class="h2">Your booking today</h2>${mine.map(nextCard).join('')}</section>`;
+  const st = nextStartToday(), end = Math.min(c, st + q.len);
+  h += `<section class="stack-sm"><div class="sec-head"><h2 class="h2">Free right now</h2>`;
+  if (st >= c){
+    h += `</div><p class="card muted">Group study rooms are closed for today. Use Find a space to book for tomorrow.</p></section>`;
+  } else {
+    const free = ROOMS.filter((r) => r.seats >= q.size && roomNow(r.code).st === 'Free' && rangeFree(r.code, S.today, st, end)).sort(fitSort(q.size)).slice(0, 3);
+    h += `<span class="small muted">${q.size} people · ${range(st, end)}</span></div>`;
+    h += free.length ? `<ul class="list">${free.map((r) => `<li class="card room-row"><div class="stack-xs"><span class="code">${r.code}</span><span class="small muted">Floor ${r.floor} · ${r.seats} seats</span><span class="st free">Free now</span></div>
+      <button class="btn primary sm" data-act="quick" data-room="${r.code}">Book ${range(st, end)}</button></li>`).join('')}</ul>`
+      : `<p class="card muted">No room for ${q.size} people is free right now. Use Find a space to look at later times.</p>`;
+    h += `</section>`;
+  }
+  h += `<section class="stack-sm"><h2 class="h2">Find a space</h2>
+    <form id="f-search" class="card stack" novalidate>
+      <div class="grid2">
+        <div class="field"><label for="s-date">Date</label><select id="s-date">${dateOptions(q.date)}</select></div>
+        <div class="field"><label for="s-start">Start</label><select id="s-start">${startOptions(q.date, q.start)}</select></div>
+        <div class="field"><label for="s-len">Length</label><select id="s-len">${lenOptions(q.len)}</select></div>
+        <div class="field"><label for="s-size">Group size</label><select id="s-size">${sizeOptions(q.size, 6)}</select></div>
+      </div>
+      ${S.searchErr ? `<p class="err" role="alert">${esc(S.searchErr)}</p>` : ''}
+      <button class="btn primary block" type="submit">Find free rooms</button>
+    </form></section>`;
+  return h;
+}
+function scrResults(){
+  normSearch();
+  const q = S.search, end = q.start + q.len, {fit, other} = findRooms(q);
+  let h = `<button class="back" data-act="back">‹ Back</button>
+    <div class="stack-xs"><h1 class="h1">Free rooms</h1><p class="sub">${dayName(q.date)} · ${range(q.start, end)} · ${q.size} people · <button class="linkbtn" data-act="back">Change</button></p></div>`;
+  if (!fit.length){
+    SUGG = suggestions(q);
+    h += `<div class="err stack-xs" role="alert"><p class="m0"><span class="ecode">E2</span> <b>No room is free for this time</b></p>
+      <p class="m0">No room for ${q.size} people is free ${dayPhrase(q.date)} ${range(q.start, end)}. Your choices are kept.</p></div>`;
+    if (SUGG.length) h += `<section class="stack-sm"><h2 class="h2">Try one of these</h2><ul class="list">${SUGG.map((s, i) => `<li><button class="card sugg" data-act="sugg" data-i="${i}"><b>${dayName(s.date)} · ${range(s.start, s.start + s.len)}</b><span class="small muted">${s.n} ${s.n === 1 ? 'room' : 'rooms'} free for ${s.size} people</span></button></li>`).join('')}</ul></section>`;
+  } else {
+    h += `<ul class="list">${fit.map((r) => `<li><button class="card room-card" data-act="room" data-room="${r.code}"><span class="code">${r.code}</span><span class="small muted">Block 5E · Floor ${r.floor} · ${r.seats} seats</span><span class="st free">Free ${range(q.start, end)}</span></button></li>`).join('')}</ul>`;
+  }
+  if (other.length) h += `<section class="stack-xs"><h3 class="h3">Not available for this time</h3><ul class="list compact">${other.map((o) => `<li class="other"><span class="code sm">${o.r.code}</span><span class="small muted">${esc(o.why)}</span></li>`).join('')}</ul></section>`;
+  return h;
+}
+function actPanel(){
+  const s = S.sel, len = s.end - s.start, left = leftMin(S.user, s.date), after = left - len;
+  return `<li class="act" id="act"><div class="stack-xs"><b class="act-t">${range(s.start, s.end)} · ${dur(len)} · ${people(s.size)}</b>
+    ${after >= 0 ? `<span class="small">Booking time left ${dayPhrase(s.date)} after this: <b>${dur(after)}</b></span>`
+      : `<span class="small warn">This is ${dur(-after)} more than your daily limit. You have ${dur(left)} left ${dayPhrase(s.date)}.</span>`}</div>
+    <button class="btn primary block" data-act="book">Book ${range(s.start, s.end)}</button></li>`;
+}
+function scrRoom(){
+  const s = S.sel, r = roomBy(s.room), [o, c] = hoursOf(s.date);
+  let h = `<button class="back" data-act="back">‹ Back</button>
+    <div class="roomhead"><div class="stack-xs"><span class="code xl">${r.code}</span><span class="small muted">Block 5E · Floor ${r.floor} · ${r.seats} seats</span></div>
+    <div class="field narrow"><label for="r-size">Group</label><select id="r-size">${sizeOptions(Math.min(s.size, r.seats), r.seats)}</select></div></div>
+    <p class="sub"><b>${dayFull(s.date)}</b> · open ${range(o, c)}</p>`;
+  if (isClosed(r.code, s.date)) return h + `<p class="card">${r.code} is closed ${dayPhrase(s.date)} for maintenance. Please choose another room.</p>`;
+  h += `<p class="small muted">Tap free half-hours to choose your time. One booking can be up to 3 hours.</p>`;
+  if (S.selMsg) h += `<p class="err" role="alert">${esc(S.selMsg)}</p>`;
+  h += `<ol class="tl" aria-label="Half-hour slots">`;
+  let pf = null, pt = null;
+  const flush = () => { if (pf != null){ h += `<li class="slot past"><span class="t">${range(pf, pt)}</span><span class="w">Past</span></li>`; pf = null; } };
+  for (let t = o; t < c; t += 30){
+    if (s.date === S.today && t < S.now){ if (pf == null) pf = t; pt = t + 30; continue; }
+    flush();
+    const own = S.bookings.find((b) => b.room === r.code && b.date === s.date && b.student === S.user && (b.status === 'Booked' || b.status === 'Checked in') && b.start <= t && t < b.end);
+    const taken = !own && overlaps(r.code, s.date, t, t + 30);
+    const chosen = s.start != null && t >= s.start && t < s.end;
+    if (own) h += `<li class="slot yours"><span class="t">${range(t, t + 30)}</span><span class="w">Your booking</span></li>`;
+    else if (taken) h += `<li class="slot booked"><span class="t">${range(t, t + 30)}</span><span class="w">Booked</span></li>`;
+    else h += `<li><button type="button" class="slot free${chosen ? ' chosen' : ''}" data-act="slot" data-t="${t}" aria-pressed="${chosen}"><span class="t">${range(t, t + 30)}</span><span class="w">${chosen ? 'Chosen' : 'Free'}</span><span class="tick" aria-hidden="true">${chosen ? '✓' : ''}</span></button></li>`;
+    if (chosen && t + 30 === s.end) h += actPanel();
+  }
+  flush();
+  return h + `</ol>`;
+}
+function askBox(b){
+  return `<div class="ask" role="alert"><b>Cancel ${b.room}, ${dayPhrase(b.date)} ${range(b.start, b.end)}?</b><span class="small">The room is released for other students and the time goes back to your daily limit.</span>
+    <div class="btnrow"><button class="btn sm danger" data-act="cancel" data-id="${b.id}">Yes, cancel booking</button><button class="btn sm" data-act="ask-no">Keep it</button></div></div>`;
+}
+function scrBooking(){
+  const b = byId(S.detailId);
+  if (!b) return `<p class="card">This booking could not be found.</p>`;
+  const r = roomBy(b.room), where = `Block 5E, floor ${r.floor}`;
+  const head = `<button class="back" data-act="home">‹ Home</button>`;
+  if (b.status === 'Booked') return head + `<div class="stack center">
+      <div class="stack-xs">${S.justBooked === b.id ? `<p class="okline">✓ Booked</p>` : `<p class="eyebrow">Your booking</p>`}
+      <h1 class="h1">${b.room} · ${range(b.start, b.end)}</h1><p class="sub">${dayFull(b.date)} · ${people(b.size)} · ${where}</p></div>
+      <div class="qrwrap">${qrSvg(qrText(b))}</div>
+      <p class="bcode">${qrText(b)}</p>
+      <div class="card stack-xs"><b>Check in ${range(b.start - BEFORE, b.start + AFTER)}</b><span class="small">Show this code to the scanner at the Circulation Desk, floor 3, block 5E. If nobody checks in by ${hm(b.start + AFTER)}, the booking is cancelled and the room is released for others.</span></div>
+      ${b.date === S.today ? `<button class="btn demo block" data-act="demo-scan" data-id="${b.id}">Demo: scan this code at the desk</button>` : ''}
+      ${S.ask === b.id ? askBox(b) : `<button class="btn block danger" data-act="ask" data-id="${b.id}">Cancel booking</button>`}
+      <button class="btn primary block" data-act="home">Done</button></div>`;
+  if (b.status === 'Checked in'){
+    const ci = S.checkins.find((x) => x.booking === b.id);
+    return head + `<div class="stack center"><div class="stack-xs"><p class="okline">✓ Checked in at ${hm(ci ? ci.inAt : b.start)}</p>
+      <h1 class="h1">${b.room} is yours until ${hm(b.end)}</h1><p class="sub">${dayFull(b.date)} · ${range(b.start, b.end)} · ${people(b.size)} · ${where}</p></div>
+      <div class="card stack-xs"><b>Leaving early?</b><span class="small">Tap Finish so the room shows as free for others. Unused time goes back to your booking time for today.</span></div>
+      <button class="btn primary block" data-act="finish" data-id="${b.id}">Finish now</button>
+      <button class="btn block" data-act="home">Home</button></div>`;
+  }
+  if (b.status === 'No-show') return head + `<div class="stack"><div class="stack-xs"><span class="ecode" style="justify-self:start">E4</span><h1 class="h1">Missed check-in</h1>
+      <p class="sub">Nobody checked in to ${b.room}, ${dayPhrase(b.date)} ${range(b.start, b.end)}, by ${hm(b.start + AFTER)}. The booking was cancelled and the room was released.</p></div>
+      <button class="btn primary block" data-act="again" data-id="${b.id}">Book again</button></div>`;
+  return head + `<div class="stack"><div class="stack-xs"><p class="eyebrow">${b.status}</p><h1 class="h1">${b.room} · ${range(b.start, b.end)}</h1><p class="sub">${dayFull(b.date)} · ${people(b.size)}</p></div>
+    <button class="btn primary block" data-act="home">Home</button><button class="btn block" data-act="nav-bookings">My bookings</button></div>`;
+}
+function bkItem(b){
+  const chip = {'Booked': 'res', 'Checked in': 'free', 'Finished': 'off', 'Cancelled': 'off', 'No-show': 'occ'}[b.status];
+  let act = '';
+  if (b.status === 'Booked') act = S.ask === b.id ? askBox(b) : `<div class="btnrow"><button class="btn sm" data-act="detail" data-id="${b.id}">Show QR code</button><button class="btn sm danger" data-act="ask" data-id="${b.id}">Cancel</button></div>`;
+  else if (b.status === 'Checked in') act = `<div class="btnrow"><button class="btn sm primary" data-act="finish" data-id="${b.id}">Finish now</button></div>`;
+  const note = b.status === 'Booked' ? `Check in ${range(b.start - BEFORE, b.start + AFTER)} at the Circulation Desk` : b.status === 'No-show' ? `Missed check-in, released at ${hm(b.start + AFTER)}` : '';
+  return `<li class="card stack-sm"><div class="row-between"><span class="code">${b.room}</span><span class="st ${chip}">${b.status}</span></div>
+    <span>${dayFull(b.date)} · ${range(b.start, b.end)} · ${people(b.size)}</span>${note ? `<span class="small muted">${note}</span>` : ''}${act}</li>`;
+}
+function scrBookings(){
+  const mine = S.bookings.filter((b) => b.student === S.user);
+  const sortAsc = (a, b) => a.date.localeCompare(b.date) || a.start - b.start;
+  const up = mine.filter((b) => (b.status === 'Booked' || b.status === 'Checked in') && b.date >= S.today).sort(sortAsc);
+  const past = mine.filter((b) => !up.includes(b)).sort((a, b) => sortAsc(b, a));
+  return `<div class="stack-xs"><h1 class="h1">My bookings</h1><p class="sub">Booking time left today: <b>${dur(leftMin(S.user, S.today))}</b></p></div>
+    ${noticesHtml()}
+    <section class="stack-sm"><h2 class="h2">Upcoming</h2>${up.length ? `<ul class="list">${up.map(bkItem).join('')}</ul>` : `<p class="card muted">No upcoming bookings. Book a room from Home.</p>`}</section>
+    <section class="stack-sm"><h2 class="h2">Past</h2><ul class="list">${past.map(bkItem).join('')}</ul></section>`;
+}
+function scrError(){
+  const e = S.err;
+  if (!e) return `<p class="card">Nothing to show.</p>`;
+  const q = e.req;
+  const kept = `<div class="kept small"><b>Your choices are kept:</b> ${q.room} · ${dayFull(q.date)} · ${range(q.start, q.end)} · ${people(q.size)}</div>`;
+  const head = `<button class="back" data-act="back">‹ Back</button>`;
+  if (e.kind === 'E3'){
+    const alts = ROOMS.filter((r) => r.code !== q.room && r.seats >= q.size && rangeFree(r.code, q.date, q.start, q.end)).sort(fitSort(q.size)).slice(0, 3);
+    return head + `<div class="stack"><div class="stack-xs"><span class="ecode" style="justify-self:start">E3</span><h1 class="h1">This time was just booked by someone else</h1>
+      <p class="sub">${q.room}, ${range(q.start, q.end)}, was booked a moment before you tapped Book. Nothing was booked for you.</p></div>${kept}
+      ${alts.length ? `<section class="stack-sm"><h2 class="h2">Free at the same time</h2><ul class="list">${alts.map((r) => `<li class="card room-row"><div class="stack-xs"><span class="code">${r.code}</span><span class="small muted">Floor ${r.floor} · ${r.seats} seats</span></div><button class="btn primary sm" data-act="alt" data-room="${r.code}">Book ${range(q.start, q.end)}</button></li>`).join('')}</ul></section>`
+        : `<p class="card">No other room for ${q.size} people is free at this time.</p>`}
+      <button class="btn block" data-act="room-again">Choose another time in ${q.room}</button>
+      <button class="btn block" data-act="to-search">Change search</button></div>`;
+  }
+  if (e.kind === 'E5') return head + `<div class="stack"><div class="stack-xs"><span class="ecode" style="justify-self:start">E5</span><h1 class="h1">No connection</h1>
+      <p class="sub">Booking not sent yet, your choices are kept.</p></div>${kept}
+      <p class="small muted">Try again sends the same booking code (${q.code}). If the first try did reach the server, you get that booking, not a second one.</p>
+      <button class="btn primary block" data-act="retry">Try again</button>
+      <button class="btn block" data-act="room-again">Back to ${q.room}</button></div>`;
+  if (e.kind === 'E6'){
+    const fitEnd = q.start + Math.floor(e.left / 30) * 30;
+    const d2 = addDays(q.date, 1);
+    return head + `<div class="stack"><div class="stack-xs"><span class="ecode" style="justify-self:start">E6</span><h1 class="h1">Over your daily limit</h1>
+      <p class="sub">You can book group study rooms for up to 3 hours a day. You already have ${dur(e.used)} booked ${dayPhrase(q.date)}, so ${dur(e.left)} ${e.left ? 'is' : 'are'} left.</p></div>${kept}
+      ${fitEnd > q.start ? `<button class="btn primary block" data-act="shorten">Book ${range(q.start, fitEnd)} instead</button>` : ''}
+      <button class="btn block" data-act="other-day">See ${q.room} ${dayPhrase(d2)}</button>
+      <button class="btn block" data-act="nav-bookings">My bookings</button></div>`;
+  }
+  return head + `<div class="stack"><h1 class="h1">This booking cannot be made</h1><p class="sub">${esc(e.text)}</p>${kept}<button class="btn block" data-act="room-again">Back to ${q.room}</button></div>`;
+}
+function renderStudent(){
+  $('#ph-clock').textContent = `${dateLong(S.today)} · ${hm(S.now)} Astana time (UTC+5)`;
+  const screens = {signin: scrSignin, home: scrHome, results: scrResults, room: scrRoom, booking: scrBooking, bookings: scrBookings, error: scrError};
+  if (!S.user && S.screen !== 'signin') S.screen = 'signin';
+  const fn = screens[S.screen] || scrHome;
+  $('#ph-body').innerHTML = (S.flash ? `<div class="flash" role="status">${esc(S.flash)}</div>` : '') + fn();
+  $('#ph-tabs').hidden = !S.user;
+  $$('#ph-tabs button').forEach((b) => b.removeAttribute('aria-current'));
+  if (S.screen === 'bookings') $('#ph-tabs [data-act="nav-bookings"]').setAttribute('aria-current', 'page');
+  else if (S.user) $('#ph-tabs [data-act="nav-home"]').setAttribute('aria-current', 'page');
+}
+
+/* ---------- rendering: desk ---------- */
+function renderDesk(){
+  $('#desk-clock').textContent = hm(S.now);
+  const net = $('#desk-net');
+  net.textContent = S.demo.offline ? `Network down · ${S.desk.queue.length} waiting on this PC` : 'Network online';
+  net.className = 'pill ' + (S.demo.offline ? 'bad' : 'ok');
+  const r = S.desk.result;
+  $('#scan-result').innerHTML = r ? `<div class="result ${r.k}"><b>${esc(r.title)}</b><span>${esc(r.text)}</span></div>` : '';
+  const arr = S.bookings.filter((b) => b.date === S.today && b.status === 'Booked' && S.now >= b.start - 30 && S.now < b.start + AFTER).sort((a, b) => a.start - b.start);
+  $('#arrivals').innerHTML = arr.length ? arr.map((b) => {
+    const open = S.now >= b.start - BEFORE;
+    return `<div class="arr"><div class="stack-xs"><span><b class="code sm">${b.room}</b> · ${range(b.start, b.end)} · ${esc(stuName(b.student, true))} · ${people(b.size)}</span>
+      <span class="small ${open ? 'strong' : 'muted'}">Check-in ${range(b.start - BEFORE, b.start + AFTER)}${open ? ' · open now' : ''}</span></div>
+      <button class="btn sm" data-act="desk-in" data-id="${b.id}"${open ? '' : ' disabled'}>Check in by ID card</button></div>`;
+  }).join('') : `<p class="empty">No group is due in the next 30 minutes.</p>`;
+  const alerts = [];
+  for (const room of ROOMS){
+    const st = roomNow(room.code);
+    if (st.walkin && !S.handled[room.code]) alerts.push(`<div class="alert hot"><div class="stack-xs"><b>${room.code}: ${people(st.ppl)}, no booking</b><span class="small">The presence sensor (simulated here) sees people in a room nobody booked. Ask them to book it or to leave.</span></div><button class="btn sm" data-act="walkin" data-room="${room.code}">Mark handled</button></div>`);
+  }
+  S.bookings.filter((b) => b.date === S.today && b.status === 'No-show').sort((a, b) => b.start - a.start).slice(0, 3).forEach((b) => {
+    alerts.push(`<div class="alert"><div class="stack-xs"><b>${b.room} released at ${hm(b.start + AFTER)}</b><span class="small">No check-in for ${range(b.start, b.end)}, so the booking became a No-show and the room was shown as free.</span></div></div>`);
+  });
+  $('#alerts').innerHTML = alerts.length ? alerts.join('') : `<p class="empty">No alerts.</p>`;
+  const [o, c] = hoursOf(S.today), n = (c - o) / 30;
+  let g = `<div class="dg" style="--n:${n}"><div class="dg-corner">Room</div>`;
+  for (let t = o; t < c; t += 60) g += `<div class="dg-h" style="grid-column:${(t - o) / 30 + 2} / span 2">${hm(t)}</div>`;
+  ROOMS.forEach((room, i) => {
+    const row = i + 2;
+    g += `<div class="dg-room" style="grid-row:${row}"><b>${room.code}</b><span>${room.seats} seats</span></div><div class="dg-lane" style="grid-row:${row}"></div>`;
+    if (isClosed(room.code, S.today)){ g += `<div class="dg-b closed" style="grid-row:${row};grid-column:2 / -1"><b>Closed</b><span>Maintenance today</span></div>`; return; }
+    S.bookings.filter((b) => b.room === room.code && b.date === S.today && b.status !== 'Cancelled').forEach((b) => {
+      const end = b.status === 'No-show' ? Math.min(b.end, b.start + 30) : b.end;
+      const cls = {'Booked': 'booked', 'Checked in': 'in', 'Finished': 'done', 'No-show': 'noshow'}[b.status];
+      g += `<div class="dg-b ${cls}${b.student === S.user ? ' mine' : ''}" style="grid-row:${row};grid-column:${(b.start - o) / 30 + 2} / ${(end - o) / 30 + 2}" title="${esc(b.status + ' · ' + range(b.start, b.end) + ' · ' + stuName(b.student, true))}"><b>${b.status}</b><span>${esc(stuName(b.student, true))}</span></div>`;
+    });
+  });
+  if (S.now >= o && S.now <= c) g += `<div class="dg-now" style="--f:${(S.now - o) / (c - o)}"><span>${hm(S.now)}</span></div>`;
+  $('#daygrid').innerHTML = g + `</div>`;
+}
+
+/* ---------- rendering: lobby ---------- */
+function renderLobby(){
+  const counts = {Free: 0, Reserved: 0, Occupied: 0, Closed: 0};
+  let fl = '';
+  for (const f of [4, 3, 2]){
+    fl += `<div class="floor"><div class="floor-l">Floor ${f}</div><div class="floor-rooms">`;
+    for (const r of ROOMS.filter((x) => x.floor === f)){
+      const st = roomNow(r.code); counts[st.st]++;
+      fl += `<div class="tile ${st.cls}"><div class="tc"><b>${r.code}</b><span>${r.seats} seats</span></div><div class="ts">${st.st}</div><div class="td">${esc(st.detail)}</div></div>`;
+    }
+    fl += `</div></div>`;
+  }
+  $('#lobby').innerHTML = `<div class="lobby-head"><div><p>Library · Block 5E</p><h2>Group study rooms</h2></div><div class="lobby-clock"><b>${hm(S.now)}</b><span>${dateLong(S.today)} · Astana time</span></div></div>
+    <div class="floors">${fl}</div>
+    <div class="lobby-foot"><span><b>${counts.Free}</b> free · <b>${counts.Reserved}</b> reserved · <b>${counts.Occupied}</b> occupied · <b>${counts.Closed}</b> closed</span><span>Book on your phone in NU Campus Space. No names are shown on this screen.</span></div>`;
+}
+
+/* ---------- rendering: server data ---------- */
+function cipher(s){ let h = 2166136261, out = '\\xc30d0407030'; for (let i = 0; i < 18; i++){ h = Math.imul(h ^ s.charCodeAt(i % s.length) ^ i, 16777619); out += ((h >>> 0) % 256).toString(16).padStart(2, '0'); } return out + '…'; }
+function renderData(){
+  const va = S.ui.viewAs, sel = $('#sel-viewas');
+  if (sel.value !== va) sel.value = va;
+  const mineOnly = va === 'student';
+  const rows = S.bookings.filter((b) => mineOnly ? b.student === DEMO_USER : (b.date === S.today || b.student === DEMO_USER)).sort((a, b) => a.id - b.id);
+  const bIds = new Set(rows.map((b) => b.id));
+  const cis = S.checkins.filter((c) => bIds.has(c.booking)).sort((a, b) => a.id - b.id);
+  const tr = (cells, mine) => `<tr${mine ? ' class="mine"' : ''}>${cells.map((c) => `<td>${c}</td>`).join('')}</tr>`;
+  const note = {
+    student: 'Planned row-level security: a student reads only their own rows. Other bookings reach the phone only as busy slots, through a view without student_id.',
+    staff: 'Desk staff read all bookings and record check-ins, but have no access to STUDENT_PHONE. Highlighted rows belong to the demo student.',
+    admin: 'The administrator can change every table. The planned database stores nu_email and phone_number encrypted with pgcrypto (AES-256); the values below imitate what is stored.',
+  }[va];
+  let h = `<p class="dnote">${note}</p>`;
+  h += `<div><p class="tname">BOOKING${mineOnly ? '' : ' · today’s rows and the demo student’s rows'}</p><div class="tbl-wrap"><table><thead><tr><th>booking_id</th><th>student_id</th><th>room_code</th><th>booking_date</th><th>start_time</th><th>end_time</th><th>status</th><th>request_code</th></tr></thead><tbody>
+    ${rows.map((b) => tr([b.id, b.student, b.room, b.date, hm(b.start), hm(b.end), b.status, `<span class="mono">${b.code}</span>`], b.student === DEMO_USER && !mineOnly)).join('')}</tbody></table></div></div>`;
+  h += `<div><p class="tname">CHECK_IN</p><div class="tbl-wrap"><table><thead><tr><th>checkin_id</th><th>booking_id</th><th>staff_id</th><th>checked_in_at</th><th>checked_out_at</th></tr></thead><tbody>
+    ${cis.length ? cis.map((c) => tr([c.id, c.booking, c.staff, hm(c.inAt), c.outAt == null ? '—' : hm(c.outAt)], byId(c.booking) && byId(c.booking).student === DEMO_USER && !mineOnly)).join('') : `<tr><td colspan="5" class="muted">No rows</td></tr>`}</tbody></table></div></div>`;
+  let ph;
+  if (va === 'staff') ph = `<tr><td colspan="2" class="muted">Permission denied: desk staff have no access to this table.</td></tr>`;
+  else if (va === 'student') ph = tr([DEMO_USER, STUDENTS[DEMO_USER].phone]);
+  else ph = Object.keys(STUDENTS).filter((id) => STUDENTS[id].phone).map((id) => tr([id, `<span class="mono">${cipher(STUDENTS[id].phone)}</span>`])).join('');
+  h += `<div><p class="tname">STUDENT_PHONE</p><div class="tbl-wrap"><table><thead><tr><th>student_id</th><th>phone_number</th></tr></thead><tbody>${ph}</tbody></table></div></div>`;
+  h += `<div><p class="tname">ROOM</p><div class="tbl-wrap"><table><thead><tr><th>room_code</th><th>block</th><th>floor</th><th>seats</th><th>is_open</th></tr></thead><tbody>
+    ${ROOMS.map((r) => tr([r.code, '5E', r.floor, r.seats, isClosed(r.code, S.today) ? 'false' : 'true'])).join('')}</tbody></table></div></div>`;
+  h += `<div><p class="tname">System log · newest first</p><ul class="log">${S.log.slice().reverse().slice(0, 80).map((l) => `<li><time>${hm(l.t)}</time><span class="tag ${l.type}">${esc(l.type)}</span><span>${esc(l.text)}</span></li>`).join('')}</ul></div>`;
+  $('#data-body').innerHTML = h;
+}
+
+/* ---------- rendering: bar and usability test ---------- */
+const mmss = (ms) => { if (ms == null) return '—'; const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+function testSummary(t){
+  const ev = t.events, first = (p) => { const e = ev.find(p); return e ? e.ms : null; };
+  const errs = {};
+  ev.filter((e) => e.type === 'error').forEach((e) => { const k = (e.text.match(/^E\d/) || ['other'])[0]; errs[k] = (errs[k] || 0) + 1; });
+  return {
+    pid: t.pid, total: t.endMs,
+    signedIn: first((e) => e.type === 'auth'), booked: first((e) => e.type === 'booked'),
+    checkedIn: first((e) => e.type === 'checkin-user'), finished: first((e) => e.type === 'finish-user'), cancelled: first((e) => e.type === 'cancel-user'),
+    errors: Object.keys(errs).sort().map((k) => k + '×' + errs[k]).join(' ') || 'none',
+    backs: ev.filter((e) => e.type === 'back').length, screens: ev.filter((e) => e.type === 'nav').length,
+  };
+}
+function testsCsv(arr){
+  const head = 'participant,total,signed_in,booked,checked_in,finished,cancelled,errors,back_taps,screens';
+  return [head].concat(arr.map((s) => [s.pid, mmss(s.total), mmss(s.signedIn), mmss(s.booked), mmss(s.checkedIn), mmss(s.finished), mmss(s.cancelled), s.errors, s.backs, s.screens].join(','))).join('\n');
+}
+function renderTest(){
+  const t = S.test, arr = loadTests();
+  let h = '';
+  if (t && t.running) h += `<p class="test-run">${esc(t.pid)} running · <span id="test-clock">${mmss(Date.now() - t.t0)}</span></p>`;
+  if (arr.length){
+    h += `<div class="tbl-wrap"><table><thead><tr><th>who</th><th>total</th><th>booked</th><th>checked in</th><th>finished</th><th>cancelled</th><th>errors</th><th>back</th></tr></thead><tbody>
+      ${arr.map((s) => `<tr><td>${esc(s.pid)}</td><td>${mmss(s.total)}</td><td>${mmss(s.booked)}</td><td>${mmss(s.checkedIn)}</td><td>${mmss(s.finished)}</td><td>${mmss(s.cancelled)}</td><td>${esc(s.errors)}</td><td>${s.backs}</td></tr>`).join('')}</tbody></table></div>
+      ${S.ui.askClear ? `<div class="ask"><b>Delete all ${arr.length} saved sessions from this browser?</b><div class="btnrow"><button class="btn sm danger" data-act="test-clear-yes">Delete</button><button class="btn sm" data-act="test-clear-no">Keep</button></div></div>`
+        : `<div class="btnrow"><button class="btn sm" data-act="test-copy">Copy results (CSV)</button><button class="btn sm" data-act="test-clear">Clear</button></div>`}
+      <textarea id="test-csv" readonly hidden aria-label="Results as CSV"></textarea>`;
+  }
+  $('#test-out').innerHTML = h;
+}
+function renderBar(){
+  $('#bar-time').textContent = hm(S.now);
+  $('#bar-day').textContent = dateLong(S.today);
+  $('#t-race').checked = S.demo.race; $('#t-drop').checked = S.demo.drop; $('#t-off').checked = S.demo.offline;
+  renderTest();
+}
+function render(){ renderBar(); renderStudent(); renderDesk(); renderLobby(); renderData(); applyPanes(); }
+
+/* ---------- actions ---------- */
+function doSignin(){
+  const L = S.login;
+  if (L.lockedUntil != null && S.now < L.lockedUntil){ L.error = 'locked'; render(); return; }
+  if (String(L.id).trim() === DEMO_USER && L.pw === DEMO_PW){
+    L.fails = 0; L.error = null; L.lockedUntil = null; L.pw = DEMO_PW;
+    S.user = DEMO_USER; S.search = defaultSearch();
+    logEv('auth', 'Student 202400117 signed in');
+    go('home', {reset: true});
+    return;
+  }
+  L.fails++;
+  logEv('error', `E1 Wrong NU ID or password (attempt ${L.fails} of 5)`);
+  if (L.fails >= 5){ L.lockedUntil = S.now + 15; L.error = 'locked'; logEv('auth', 'Sign-in locked for 15 minutes after 5 wrong attempts'); }
+  else L.error = 'wrong';
+  save(); render();
+}
+function doSearch(){
+  normSearch();
+  const q = S.search, [, c] = hoursOf(q.date);
+  if (q.start + q.len > c){ S.searchErr = `Rooms close at ${hm(c)} ${dayPhrase(q.date)}. Choose an earlier start or a shorter length.`; renderStudent(); return; }
+  logEv('search', `Search ${dateLong(q.date)} ${range(q.start, q.start + q.len)}, ${q.size} people`);
+  if (!findRooms(q).fit.length) logEv('error', `E2 No free room for ${q.size} people ${range(q.start, q.start + q.len)}`);
+  go('results');
+}
+function openRoom(code, date, start, end, size){
+  S.sel = {room: code, date, size: Math.min(size, roomBy(code).seats), start: null, end: null};
+  if (start != null && rangeFree(code, date, start, end) && end - start <= LIMIT){ S.sel.start = start; S.sel.end = end; }
+  go('room');
+}
+function tapSlot(t){
+  const s = S.sel; S.selMsg = null;
+  if (!rangeFree(s.room, s.date, t, t + 30)) return;
+  const tooLong = (a, b) => b - a > LIMIT;
+  if (s.start == null){ s.start = t; s.end = t + 30; }
+  else if (t === s.end){ if (tooLong(s.start, s.end + 30)) S.selMsg = 'One booking can be up to 3 hours.'; else s.end += 30; }
+  else if (t === s.start - 30){ if (tooLong(s.start - 30, s.end)) S.selMsg = 'One booking can be up to 3 hours.'; else s.start -= 30; }
+  else if (t === s.start && s.end - s.start === 30){ s.start = s.end = null; }
+  else if (t === s.start){ s.start += 30; }
+  else if (t === s.end - 30){ s.end -= 30; }
+  else if (t > s.start && t < s.end){ s.end = t + 30; }
+  else { s.start = t; s.end = t + 30; }
+  track('tap-slot', hm(t));
+  save(); renderStudent();
+}
+function signOut(){
+  logEv('auth', 'Student 202400117 signed out');
+  S.user = null; S.login.error = null; S.login.pw = DEMO_PW; S.notices = [];
+  go('signin', {reset: true});
+}
+function reset(keepTest){
+  const ui = S ? S.ui : null, test = keepTest && S ? S.test : null;
+  seed();
+  if (ui){ S.ui = ui; S.ui.askClear = false; }
+  S.test = test;
+  save(); render();
+}
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  const a = el.dataset.act, d = el.dataset;
+  switch (a){
+    case 'tab': { if (location.hash.slice(1) === d.v) fromHash(); else location.hash = d.v; S.ui.view = d.v; if (d.v !== 'student') S.ui.side = d.v; applyPanes(); save(); break; }
+    case 'adv': advance(Number(d.min)); break;
+    case 'reset': reset(true); break;
+    case 'lang': if (d.l !== 'en'){ S.flash = 'Kazakh and Russian versions are planned. This prototype is in English only.'; renderStudent(); } break;
+    case 'forgot': S.login.forgot = !S.login.forgot; renderStudent(); break;
+    case 'signout': signOut(); break;
+    case 'nav-home': if (S.user) go('home', {reset: true}); break;
+    case 'nav-bookings': if (S.user) go('bookings', {stack: ['home']}); break;
+    case 'home': go('home', {reset: true}); break;
+    case 'back': back(); break;
+    case 'quick': { const q = S.search, st = nextStartToday(), end = Math.min(hoursOf(S.today)[1], st + q.len); submitBooking({room: d.room, date: S.today, start: st, end, size: q.size, code: randHex(3)}); break; }
+    case 'room': { const q = S.search; track('open-room', d.room); openRoom(d.room, q.date, q.start, q.start + q.len, q.size); break; }
+    case 'sugg': { const s = SUGG[Number(d.i)]; if (s){ S.search = {date: s.date, start: s.start, len: s.len, size: s.size}; go('results'); } break; }
+    case 'slot': tapSlot(Number(d.t)); break;
+    case 'book': { const s = S.sel; if (s && s.start != null) submitBooking({room: s.room, date: s.date, start: s.start, end: s.end, size: s.size, code: randHex(3)}); break; }
+    case 'detail': S.detailId = Number(d.id); go('booking'); break;
+    case 'demo-scan': { const b = byId(d.id); if (b){ const r = deskScan(qrText(b)); if (r && r.k !== 'ok' && r.k !== 'queued'){ S.flash = `Desk: ${r.title}. ${r.text}`; renderStudent(); } else if (r && r.k === 'queued'){ S.flash = 'The desk PC is offline: your scan was saved there and will be sent when its network is back.'; renderStudent(); } } break; }
+    case 'ask': S.ask = Number(d.id); renderStudent(); break;
+    case 'ask-no': S.ask = null; renderStudent(); break;
+    case 'cancel': cancelBooking(d.id); break;
+    case 'finish': finishBooking(d.id); break;
+    case 'again': { const b = byId(d.id); S.notices = S.notices.filter((n) => n.id !== Number(d.id)); if (b){ S.search = {date: S.today, start: nextStartToday(), len: Math.min(b.end - b.start, 180), size: b.size}; normSearch(); go('results'); } break; }
+    case 'notice-x': S.notices.splice(Number(d.i), 1); save(); renderStudent(); break;
+    case 'alt': { const q = S.err.req; submitBooking({room: d.room, date: q.date, start: q.start, end: q.end, size: q.size, code: randHex(3)}); break; }
+    case 'room-again': { const q = S.err ? S.err.req : S.sel; openRoom(q.room, q.date, null, null, q.size); break; }
+    case 'to-search': { const q = S.err.req; S.search = {date: q.date, start: q.start, len: q.end - q.start, size: q.size}; go('home', {reset: true}); break; }
+    case 'retry': if (S.pending) submitBooking(S.pending); break;
+    case 'shorten': { const e = S.err, q = e.req; submitBooking({...q, end: q.start + Math.floor(e.left / 30) * 30, code: randHex(3)}); break; }
+    case 'other-day': { const q = S.err.req; openRoom(q.room, addDays(q.date, 1), q.start, q.end, q.size); break; }
+    case 'desk-in': { const b = byId(d.id); if (b) deskScan(qrText(b)); break; }
+    case 'walkin': S.handled[d.room] = true; logEv('desk', `Staff spoke to the people in ${d.room}, which had no booking`); setSensor(d.room, 0, 1200); save(); render(); break;
+    case 'test-start':
+    case 'test-start-keep': {
+      const pid = ($('#t-pid').value || 'P?').trim().slice(0, 12) || 'P?';
+      if (a === 'test-start') reset(false);
+      S.test = {running: true, pid, t0: Date.now(), events: [], endMs: null};
+      S.ui.view = 'student'; location.hash = 'student';
+      save(); render();
+      $('#tools').open = false;
+      break;
+    }
+    case 'test-end': {
+      if (!S.test || !S.test.running) break;
+      S.test.running = false; S.test.endMs = Date.now() - S.test.t0;
+      const arr = loadTests(); arr.push(testSummary(S.test)); saveTests(arr);
+      const m = $('#t-pid').value.match(/^(.*?)(\d+)$/);
+      if (m) $('#t-pid').value = m[1] + (Number(m[2]) + 1);
+      save(); renderTest();
+      break;
+    }
+    case 'test-copy': {
+      const csv = testsCsv(loadTests()), ta = $('#test-csv');
+      const fallback = () => { ta.hidden = false; ta.value = csv; ta.focus(); ta.select(); };
+      try { navigator.clipboard.writeText(csv).then(() => { el.textContent = 'Copied'; }, fallback); } catch (err){ fallback(); }
+      break;
+    }
+    case 'test-clear': S.ui.askClear = true; renderTest(); break;
+    case 'test-clear-no': S.ui.askClear = false; renderTest(); break;
+    case 'test-clear-yes': saveTests([]); S.ui.askClear = false; renderTest(); break;
+  }
+});
+document.addEventListener('submit', (e) => {
+  const f = e.target; e.preventDefault();
+  if (f.id === 'f-signin') doSignin();
+  else if (f.id === 'f-search') doSearch();
+  else if (f.id === 'f-scan'){ const i = $('#in-scan'); deskScan(i.value); i.value = ''; i.focus(); }
+});
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'in-id') S.login.id = e.target.value;
+  else if (e.target.id === 'in-pw') S.login.pw = e.target.value;
+});
+document.addEventListener('change', (e) => {
+  const t = e.target, q = S.search;
+  switch (t.id){
+    case 's-date': q.date = t.value; normSearch(); S.searchErr = null; save(); renderStudent(); break;
+    case 's-start': q.start = Number(t.value); S.searchErr = null; save(); renderStudent(); break;
+    case 's-len': q.len = Number(t.value); S.searchErr = null; save(); renderStudent(); break;
+    case 's-size': q.size = Number(t.value); save(); renderStudent(); break;
+    case 'r-size': S.sel.size = Number(t.value); save(); renderStudent(); break;
+    case 't-race': S.demo.race = t.checked; logEv('clock', t.checked ? 'Demo: the next booking will be taken by someone else first' : 'Demo: E3 test switched off'); save(); break;
+    case 't-drop': S.demo.drop = t.checked; logEv('clock', t.checked ? 'Demo: the next booking will lose its connection' : 'Demo: E5 test switched off'); save(); break;
+    case 't-off': setOffline(t.checked); break;
+    case 'sel-viewas': S.ui.viewAs = t.value; save(); renderData(); break;
+  }
+});
+window.addEventListener('hashchange', () => { fromHash(); save(); });
+if (mqWide.addEventListener) mqWide.addEventListener('change', applyPanes); else mqWide.addListener(applyPanes);
+setInterval(() => { const el = $('#test-clock'); if (el && S.test && S.test.running) el.textContent = mmss(Date.now() - S.test.t0); }, 1000);
+
+/* ---------- start ---------- */
+if (!load()) seed();
+fromHash();
+render();
+if (typeof window.qrcode !== 'function'){
+  const s = document.createElement('script');
+  s.src = 'https://unpkg.com/qrcode-generator@1.4.4/qrcode.js';
+  s.onload = () => renderStudent();
+  document.head.appendChild(s);
+}
+})();
+</script>
+</body>
+</html>
