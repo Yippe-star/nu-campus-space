@@ -103,7 +103,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @media (max-width:759px){.bar{position:relative;top:0}.intro{display:none}.bar:not(.open) .tabs,.bar:not(.open) .clock,.bar:not(.open) .tools{display:none}}
 .demo-toggle{display:none}
 @media (max-width:759px){.demo-toggle{display:inline-flex}.bar.open .demo-toggle{background:var(--bar-ink);color:var(--bar)}}
-.nextstep{border:2px solid var(--accent)}
+.card.nextstep{border:2px solid var(--accent)}
 @media (max-width:480px){.arr,.alert{grid-template-columns:1fr}.arr .btn,.alert .btn{justify-self:start}}
 @media (min-width:1080px){.tab-student{display:none}}
 @media (max-width:759px){
@@ -2091,13 +2091,13 @@ function go(screen, o = {}){
   else if (o.reset) S.stack = [];
   else if (S.screen !== screen){ S.stack.push(S.screen); if (S.stack.length > 20) S.stack.shift(); }
   if (screen !== 'booking') S.justBooked = null;
-  S.screen = screen; S.flash = o.flash || null; S.ask = null; S.selMsg = null; S.searchErr = o.searchErr || null;
+  S.screen = screen; S.flash = o.flash || null; S.scanMsg = null; S.ask = null; S.selMsg = null; S.searchErr = o.searchErr || null;
   track('nav', screen);
   save(); render(); toTop();
 }
 function back(){
   const prev = S.stack.pop() || (S.user ? 'home' : 'signin');
-  S.screen = prev; S.flash = null; S.ask = null; S.selMsg = null; S.justBooked = null;
+  S.screen = prev; S.flash = null; S.scanMsg = null; S.ask = null; S.selMsg = null; S.justBooked = null;
   track('back', prev);
   save(); render(); toTop();
 }
@@ -2156,11 +2156,11 @@ function nextCard(b){
   if (b.status === 'Checked in') return `<div class="card stack-sm"><div class="row-between"><span class="code">${b.room}</span><span class="st free">Checked in</span></div>
     <p class="m0">${range(b.start, b.end)} · ${people(b.size)} · yours until ${hm(b.end)}</p>
     <button class="btn block" data-act="detail" data-id="${b.id}">Open booking · finish when you leave</button></div>`;
-  const open = S.now >= b.start - BEFORE;
+  const open = ciState(b) === 'open';
   return `<div class="card stack-sm"><div class="row-between"><span class="code">${b.room}</span><span class="st res">Booked</span></div>
     <p class="m0">${dayName(b.date)} · ${range(b.start, b.end)} · ${people(b.size)}</p>
     <p class="m0 small${open ? ' strong' : ''}">Check in at the Circulation Desk ${range(b.start - BEFORE, b.start + AFTER)}${open ? ' · open now' : ''}</p>
-    ${open && b.date === S.today ? `<button class="btn primary block" data-act="demo-scan" data-id="${b.id}">I'm at the desk: check me in</button><button class="btn block" data-act="detail" data-id="${b.id}">Show QR code</button>` : `<button class="btn primary block" data-act="detail" data-id="${b.id}">Show QR code</button>`}</div>`;
+    ${open ? `<button class="btn primary block" data-act="demo-scan" data-id="${b.id}">I'm at the desk: check me in</button>${scanMsgFor(b)}<button class="btn block" data-act="detail" data-id="${b.id}">Show QR code</button>` : `<button class="btn primary block" data-act="detail" data-id="${b.id}">Show QR code</button>`}</div>`;
 }
 function scrSignin(){
   const L = S.login, locked = L.lockedUntil != null && S.now < L.lockedUntil;
@@ -2266,6 +2266,22 @@ function askBox(b){
   return `<div class="ask" role="alert"><b>Cancel ${b.room}, ${dayPhrase(b.date)} ${range(b.start, b.end)}?</b><span class="small">The room is released for other students and the time goes back to your daily limit.</span>
     <div class="btnrow"><button class="btn sm danger" data-act="cancel" data-id="${b.id}">Yes, cancel booking</button><button class="btn sm" data-act="ask-no">Keep it</button></div></div>`;
 }
+function ciState(b){
+  if (b.status !== 'Booked' || b.date !== S.today) return 'other';
+  if (S.now < b.start - BEFORE) return 'early';
+  if (S.now > b.start + AFTER) return 'closed';
+  return 'open';
+}
+function scanMsgFor(b){
+  return S.scanMsg && S.scanMsg.id === b.id ? `<div class="err small scanmsg" role="alert"><b>${esc(S.scanMsg.title)}.</b> ${esc(S.scanMsg.text)}</div>` : '';
+}
+function ciBlock(b){
+  const st = ciState(b);
+  if (st === 'open') return `<button class="btn primary block" data-act="demo-scan" data-id="${b.id}">I'm at the desk: check me in</button>${scanMsgFor(b)}<span class="small muted">Prototype: this button does the desk's scan for you. You don't need the Desk screen.</span>`;
+  if (st === 'early') return `<p class="m0 small strong">Check-in opens at ${hm(b.start - BEFORE)}, 10 minutes before the start.</p><span class="small muted">Prototype: the demo clock stands still at ${hm(S.now)}. <button class="linkbtn small" data-act="skip-to" data-t="${b.start - BEFORE}">Skip to ${hm(b.start - BEFORE)}</button> to try check-in.</span>${scanMsgFor(b)}`;
+  if (st === 'closed') return `<p class="m0 small strong">Check-in closed at ${hm(b.start + AFTER)}.</p>${scanMsgFor(b)}`;
+  return scanMsgFor(b);
+}
 function scrBooking(){
   const b = byId(S.detailId);
   if (!b) return `<p class="card">This booking could not be found.</p>`;
@@ -2277,7 +2293,7 @@ function scrBooking(){
       <div class="qrwrap">${qrSvg(qrText(b))}</div>
       <p class="bcode">${qrText(b)}</p>
       <div class="card stack-sm nextstep"><p class="eyebrow m0">Next step</p><b>Check in at the Circulation Desk, ${range(b.start - BEFORE, b.start + AFTER)}</b><span class="small">When you arrive, the desk scans this code (floor 3, block 5E). If nobody checks in by ${hm(b.start + AFTER)}, the booking is cancelled and the room is released for others.</span>
-        ${b.date === S.today ? `<button class="btn primary block" data-act="demo-scan" data-id="${b.id}">I'm at the desk: check me in</button><span class="small muted">Prototype: this button does the desk's scan for you. You don't need the Desk screen.</span>` : ''}</div>
+        ${ciBlock(b)}</div>
       ${S.ask === b.id ? askBox(b) : `<button class="btn block danger" data-act="ask" data-id="${b.id}">Cancel booking</button>`}
       <button class="btn block" data-act="home">Back to home</button></div>`;
   if (b.status === 'Checked in'){
@@ -2564,7 +2580,8 @@ document.addEventListener('click', (e) => {
     case 'book': { const s = S.sel; if (s && s.start != null) submitBooking({room: s.room, date: s.date, start: s.start, end: s.end, size: s.size, code: randHex(3)}); break; }
     case 'detail': S.detailId = Number(d.id); go('booking'); break;
     case 'bar-toggle': { const bar = document.querySelector('.bar'); const o = bar.classList.toggle('open'); el.setAttribute('aria-expanded', String(o)); break; }
-    case 'demo-scan': { const b = byId(d.id); if (b){ const r = deskScan(qrText(b)); if (r && r.k !== 'ok' && r.k !== 'queued'){ S.flash = `Desk: ${r.title}. ${r.text}`; renderStudent(); } else if (r && r.k === 'queued'){ S.flash = 'The desk PC is offline: your scan was saved there and will be sent when its network is back.'; renderStudent(); } } break; }
+    case 'demo-scan': { const b = byId(d.id); if (b){ S.scanMsg = null; const r = deskScan(qrText(b)); if (r && r.k === 'queued') S.scanMsg = {id: b.id, title: 'Desk PC offline', text: 'Your scan was saved on the desk PC and is sent when its network is back.'}; else if (r && r.k !== 'ok' && r.k !== 'info') S.scanMsg = {id: b.id, title: r.title, text: r.text}; renderStudent(); const m = $('#ph-body .scanmsg'); if (m) m.scrollIntoView({block: 'center'}); } break; }
+    case 'skip-to': { const t = Number(d.t); S.scanMsg = null; if (t > S.now) advance(t - S.now); break; }
     case 'ask': S.ask = Number(d.id); renderStudent(); break;
     case 'ask-no': S.ask = null; renderStudent(); break;
     case 'cancel': cancelBooking(d.id); break;
@@ -2638,6 +2655,9 @@ if (mqWide.addEventListener) mqWide.addEventListener('change', applyPanes); else
 setInterval(() => { const el = $('#test-clock'); if (el && S.test && S.test.running) el.textContent = mmss(Date.now() - S.test.t0); }, 1000);
 
 /* ---------- start ---------- */
+$('#tools').addEventListener('toggle', () => {
+  if (!$('#tools').open && S.test && S.test.running){ const bar = document.querySelector('.bar'); bar.classList.remove('open'); const tg = document.querySelector('.demo-toggle'); if (tg) tg.setAttribute('aria-expanded', 'false'); }
+});
 if (!load()) seed();
 fromHash();
 render();
