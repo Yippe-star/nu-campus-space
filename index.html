@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
 <title>NU Campus Space</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Clickable prototype of NU Campus Space: group study room booking, QR check-in and live occupancy for Nazarbayev University. Student course project with sample data.">
@@ -98,7 +100,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .btnrow{display:flex;flex-wrap:wrap;gap:8px}
 .tab .lg{display:none}
 @media (min-width:760px){.tabs{order:0;width:auto}.tab{flex:none}.tab .lg{display:inline}}
-@media (max-width:759px){.bar{position:relative;top:0}}
+@media (max-width:759px){.bar{position:relative;top:0}.intro{display:none}.bar:not(.open) .tabs,.bar:not(.open) .clock,.bar:not(.open) .tools{display:none}}
+.demo-toggle{display:none}
+@media (max-width:759px){.demo-toggle{display:inline-flex}.bar.open .demo-toggle{background:var(--bar-ink);color:var(--bar)}}
+.nextstep{border:2px solid var(--accent)}
 @media (max-width:480px){.arr,.alert{grid-template-columns:1fr}.arr .btn,.alert .btn{justify-self:start}}
 @media (min-width:1080px){.tab-student{display:none}}
 @media (max-width:759px){
@@ -339,8 +344,7 @@ tr.mine td{background:var(--accent-soft)}
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
-</head>
-<body>
+
 <div id="app">
   <header class="bar">
     <div class="bar-in">
@@ -348,6 +352,7 @@ tr.mine td{background:var(--accent-soft)}
         <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="3" y="3" width="22" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M9.5 14.5l3.2 3.2 6-6.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <div><b>NU Campus Space</b><small>Prototype · sample data</small></div>
       </div>
+      <button class="bbtn demo-toggle" data-act="bar-toggle" aria-expanded="false">Demo controls</button>
       <nav class="tabs" role="tablist" aria-label="Screens">
         <button class="tab tab-student" role="tab" data-act="tab" data-v="student" aria-selected="true">Student</button>
         <button class="tab" role="tab" data-act="tab" data-v="desk" aria-selected="false"><span class="lg">Circulation </span>Desk</button>
@@ -367,7 +372,7 @@ tr.mine td{background:var(--accent-soft)}
             <ol>
               <li>Sign in with the demo account.</li>
               <li>Tap <b>Book 14:00–16:00</b> next to a free room.</li>
-              <li>Tap <b>Demo: scan this code at the desk</b>, or scan it in the Circulation Desk tab.</li>
+              <li>Tap <b>I'm at the desk: check me in</b>, or scan the code in the Circulation Desk tab.</li>
               <li>Open the Lobby screen: the room turns Occupied.</li>
               <li>Tap <b>Finish now</b>. The room turns Free.</li>
             </ol>
@@ -2155,7 +2160,7 @@ function nextCard(b){
   return `<div class="card stack-sm"><div class="row-between"><span class="code">${b.room}</span><span class="st res">Booked</span></div>
     <p class="m0">${dayName(b.date)} · ${range(b.start, b.end)} · ${people(b.size)}</p>
     <p class="m0 small${open ? ' strong' : ''}">Check in at the Circulation Desk ${range(b.start - BEFORE, b.start + AFTER)}${open ? ' · open now' : ''}</p>
-    <button class="btn primary block" data-act="detail" data-id="${b.id}">Show QR code</button></div>`;
+    ${open && b.date === S.today ? `<button class="btn primary block" data-act="demo-scan" data-id="${b.id}">I'm at the desk: check me in</button><button class="btn block" data-act="detail" data-id="${b.id}">Show QR code</button>` : `<button class="btn primary block" data-act="detail" data-id="${b.id}">Show QR code</button>`}</div>`;
 }
 function scrSignin(){
   const L = S.login, locked = L.lockedUntil != null && S.now < L.lockedUntil;
@@ -2163,7 +2168,7 @@ function scrSignin(){
   if (locked) err = `Sign-in is locked until ${hm(L.lockedUntil)} after 5 wrong attempts. If you forgot your password, use “Forgot password?” below.`;
   else if (L.error === 'wrong') err = `NU ID or password is incorrect. After 5 wrong attempts sign-in is locked for 15 minutes. <span class="muted">(${5 - L.fails} ${5 - L.fails === 1 ? 'attempt' : 'attempts'} left)</span>`;
   return `<div class="stack-xs"><h1 class="h1">Sign in</h1><p class="sub">Book a group study room in block 5E and check in with a QR code.</p></div>
-    <p class="note"><b>Prototype.</b> Use the demo account below. Do not type your real NU password here.</p>
+    <p class="note"><b>Prototype.</b> A student course project, not an official NU service. Use the demo account below. Do not type your real NU password here.</p>
     <form id="f-signin" class="stack" novalidate autocomplete="off">
       <div class="field"><label for="in-id">NU ID</label><input id="in-id" inputmode="numeric" autocomplete="off" spellcheck="false" value="${esc(L.id)}"></div>
       <div class="field"><label for="in-pw">Password</label><input id="in-pw" type="password" autocomplete="off" value="${esc(L.pw)}"></div>
@@ -2271,10 +2276,10 @@ function scrBooking(){
       <h1 class="h1">${b.room} · ${range(b.start, b.end)}</h1><p class="sub">${dayFull(b.date)} · ${people(b.size)} · ${where}</p></div>
       <div class="qrwrap">${qrSvg(qrText(b))}</div>
       <p class="bcode">${qrText(b)}</p>
-      <div class="card stack-xs"><b>Check in ${range(b.start - BEFORE, b.start + AFTER)}</b><span class="small">Show this code to the scanner at the Circulation Desk, floor 3, block 5E. If nobody checks in by ${hm(b.start + AFTER)}, the booking is cancelled and the room is released for others.</span></div>
-      ${b.date === S.today ? `<button class="btn demo block" data-act="demo-scan" data-id="${b.id}">Demo: scan this code at the desk</button>` : ''}
+      <div class="card stack-sm nextstep"><p class="eyebrow m0">Next step</p><b>Check in at the Circulation Desk, ${range(b.start - BEFORE, b.start + AFTER)}</b><span class="small">When you arrive, the desk scans this code (floor 3, block 5E). If nobody checks in by ${hm(b.start + AFTER)}, the booking is cancelled and the room is released for others.</span>
+        ${b.date === S.today ? `<button class="btn primary block" data-act="demo-scan" data-id="${b.id}">I'm at the desk: check me in</button><span class="small muted">Prototype: this button does the desk's scan for you. You don't need the Desk screen.</span>` : ''}</div>
       ${S.ask === b.id ? askBox(b) : `<button class="btn block danger" data-act="ask" data-id="${b.id}">Cancel booking</button>`}
-      <button class="btn primary block" data-act="home">Done</button></div>`;
+      <button class="btn block" data-act="home">Back to home</button></div>`;
   if (b.status === 'Checked in'){
     const ci = S.checkins.find((x) => x.booking === b.id);
     return head + `<div class="stack center"><div class="stack-xs"><p class="okline">✓ Checked in at ${hm(ci ? ci.inAt : b.start)}</p>
@@ -2558,6 +2563,7 @@ document.addEventListener('click', (e) => {
     case 'slot': tapSlot(Number(d.t)); break;
     case 'book': { const s = S.sel; if (s && s.start != null) submitBooking({room: s.room, date: s.date, start: s.start, end: s.end, size: s.size, code: randHex(3)}); break; }
     case 'detail': S.detailId = Number(d.id); go('booking'); break;
+    case 'bar-toggle': { const bar = document.querySelector('.bar'); const o = bar.classList.toggle('open'); el.setAttribute('aria-expanded', String(o)); break; }
     case 'demo-scan': { const b = byId(d.id); if (b){ const r = deskScan(qrText(b)); if (r && r.k !== 'ok' && r.k !== 'queued'){ S.flash = `Desk: ${r.title}. ${r.text}`; renderStudent(); } else if (r && r.k === 'queued'){ S.flash = 'The desk PC is offline: your scan was saved there and will be sent when its network is back.'; renderStudent(); } } break; }
     case 'ask': S.ask = Number(d.id); renderStudent(); break;
     case 'ask-no': S.ask = null; renderStudent(); break;
@@ -2643,5 +2649,6 @@ if (typeof window.qrcode !== 'function'){
 }
 })();
 </script>
+
 </body>
 </html>
