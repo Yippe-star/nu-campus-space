@@ -104,6 +104,31 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .demo-toggle{display:none}
 @media (max-width:759px){.demo-toggle{display:inline-flex}.bar.open .demo-toggle{background:var(--bar-ink);color:var(--bar)}}
 .card.nextstep{border:2px solid var(--accent)}
+.gt:empty{display:none}
+.guided .bar,.guided .intro,.guided #pane-desk,.guided #pane-lobby,.guided #pane-data{display:none!important}
+.guided [hidden]{display:none!important}
+.guided .stage{grid-template-columns:minmax(0,460px);justify-content:center;padding-top:12px}
+.guided #pane-student{display:grid;gap:12px}
+.guided .phone{position:static;height:auto;max-height:none;min-height:0}
+.guided .ph-scroll{overflow:visible}
+.gt-card{width:100%;max-width:460px;margin-inline:auto;padding:20px}
+.gt-list{margin:0;padding-left:20px;display:grid;gap:6px}
+.gt-task{position:sticky;top:max(8px,env(safe-area-inset-top,0px));z-index:25;background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);display:grid;gap:6px;max-width:440px;width:100%;margin-inline:auto}
+.gt-text{font-weight:700;font-size:15px;line-height:1.35}
+.gt-steps{list-style:none;margin:0;padding:0;display:flex;gap:6px;flex-wrap:wrap;font-size:13px}
+.gt-steps li{border:1px solid var(--line-2);border-radius:999px;padding:2px 10px;color:var(--ink-2)}
+.gt-steps li.ok{background:var(--free-bg);border-color:var(--free-line);color:var(--ink);font-weight:700}
+.gt-done{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:8px}
+.sus{margin:0;padding-left:22px;display:grid;gap:16px}
+.sus li{display:grid;gap:8px}
+.sus li.missing{outline:2px solid var(--occ);outline-offset:4px;border-radius:8px}
+.sus-scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.sus-scale button{min-height:44px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);font-weight:700;font-size:16px;color:var(--ink)}
+.sus-scale button[aria-pressed="true"],.gt-pick[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.sus-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3)}
+.field textarea{width:100%;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);padding:10px 12px;font:inherit;resize:vertical}
+.flabel{font-size:13px;font-weight:700;color:var(--ink-2)}
+.gt-out{width:100%;font:12px/1.45 var(--font-mono);border:1px solid var(--line-2);border-radius:10px;padding:10px;background:var(--surface-2);color:var(--ink)}
 @media (max-width:480px){.arr,.alert{grid-template-columns:1fr}.arr .btn,.alert .btn{justify-self:start}}
 @media (min-width:1080px){.tab-student{display:none}}
 @media (max-width:759px){
@@ -400,6 +425,9 @@ tr.mine td{background:var(--accent-soft)}
               <button class="btn sm" data-act="test-start-keep">Start, keep data</button>
               <button class="btn sm" data-act="test-end">End</button>
             </div>
+            <p class="small" style="margin-top:8px"><b>Easier:</b> send testers the guided test link. Each person does 3 tasks and the questionnaire alone, on their own phone, then sends you the results.</p>
+            <div class="btnrow" style="margin-top:6px"><button class="btn sm primary" data-act="g-copylink">Copy guided test link</button><button class="btn sm" data-act="g-copyall">Copy guided results saved here</button></div>
+            <p class="small muted" id="g-linknote" role="status"></p>
             <p class="small muted" style="margin-top:6px"><b>Start</b> resets the demo data and starts the timer. <b>Start, keep data</b> times the next task from where the last one ended. <b>End</b> saves the times, errors and back taps in this browser.</p>
             <div id="test-out" class="stack-sm" style="margin-top:10px"></div>
           </div>
@@ -413,6 +441,7 @@ tr.mine td{background:var(--accent-soft)}
 
   <main class="stage">
     <section id="pane-student" class="pane" aria-label="Student phone">
+      <div id="gt" class="gt"></div>
       <div class="phone">
         <div class="ph-bar">
           <span class="ph-brand"><svg viewBox="0 0 28 28" aria-hidden="true"><rect x="3" y="3" width="22" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M9.5 14.5l3.2 3.2 6-6.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Campus Space</span>
@@ -1856,7 +1885,7 @@ function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e)
 function loadTests(){ try { return JSON.parse(localStorage.getItem(TKEY) || '[]'); } catch (e){ return []; } }
 function saveTests(a){ try { localStorage.setItem(TKEY, JSON.stringify(a)); } catch (e){} }
 
-function track(type, text){ if (S.test && S.test.running) S.test.events.push({ms: Date.now() - S.test.t0, type, text}); }
+function track(type, text){ if (S.test && S.test.running){ S.test.events.push({ms: Date.now() - S.test.t0, type, text}); if (GUIDED) gOnEvent(type); } }
 function logEv(type, text){ S.log.push({t: S.now, type, text}); if (S.log.length > 400) S.log.splice(0, S.log.length - 400); track(type, text); }
 
 /* ---------- queries ---------- */
@@ -2103,6 +2132,7 @@ function back(){
 }
 function toTop(){
   const sc = $('#ph-scroll');
+  if (GUIDED){ const tk = $('#gt'); const y = tk ? tk.getBoundingClientRect().top + window.scrollY - 8 : 0; if (window.scrollY > y) window.scrollTo(0, Math.max(0, y)); }
   if (mqWide.matches){ if (sc) sc.scrollTop = 0; }
   else if (S.ui.view === 'student'){
     const p = $('#pane-student'), y = p.getBoundingClientRect().top + window.scrollY - 70;
@@ -2498,7 +2528,7 @@ function renderBar(){
   $('#t-race').checked = S.demo.race; $('#t-drop').checked = S.demo.drop; $('#t-off').checked = S.demo.offline;
   renderTest();
 }
-function render(){ renderBar(); renderStudent(); renderDesk(); renderLobby(); renderData(); applyPanes(); }
+function render(){ renderBar(); renderStudent(); renderDesk(); renderLobby(); renderData(); applyPanes(); if (GUIDED) renderGuide(); }
 
 /* ---------- actions ---------- */
 function doSignin(){
@@ -2562,7 +2592,10 @@ document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (!el || el.disabled) return;
   const a = el.dataset.act, d = el.dataset;
+  if (GUIDED && a.startsWith('g-') && gAction(a, d, el)) return;
   switch (a){
+    case 'g-copylink': { const url = location.href.split('#')[0].split('?')[0] + '?test'; const n = $('#g-linknote'); try { navigator.clipboard.writeText(url).then(() => { n.textContent = 'Copied: ' + url; }, () => { n.textContent = url; }); } catch (err){ n.textContent = url; } break; }
+    case 'g-copyall': { let all = []; try { all = JSON.parse(localStorage.getItem(GRKEY) || '[]'); } catch (err){} const n = $('#g-linknote'); if (!all.length){ n.textContent = 'No guided results saved in this browser yet.'; break; } const txt = all.join('\n\n'); try { navigator.clipboard.writeText(txt).then(() => { n.textContent = `Copied ${all.length} result${all.length > 1 ? 's' : ''}.`; }, () => { n.textContent = txt; }); } catch (err){ n.textContent = txt; } break; }
     case 'tab': { if (location.hash.slice(1) === d.v) fromHash(); else location.hash = d.v; S.ui.view = d.v; if (d.v !== 'student') S.ui.side = d.v; applyPanes(); save(); break; }
     case 'adv': advance(Number(d.min)); break;
     case 'reset': reset(true); break;
@@ -2654,11 +2687,191 @@ window.addEventListener('hashchange', () => { fromHash(); save(); });
 if (mqWide.addEventListener) mqWide.addEventListener('change', applyPanes); else mqWide.addListener(applyPanes);
 setInterval(() => { const el = $('#test-clock'); if (el && S.test && S.test.running) el.textContent = mmss(Date.now() - S.test.t0); }, 1000);
 
+/* ---------- guided usability test: open the page with ?test ---------- */
+const GUIDED = new URLSearchParams(location.search).has('test');
+const GKEY = 'nucs-guided-v1', GRKEY = 'nucs-guided-results-v1';
+const GTASKS = [
+  {id: 'T1', title: 'Book a room, check in, finish', fresh: 'signed-out', done: 'finish-user',
+    text: 'You and three friends want to study today from 14:00 for 2 hours. Book a room, check in when you get to the library desk, and finish when you leave.',
+    steps: [['booked', 'Booked'], ['checkin-user', 'Checked in'], ['finish-user', 'Finished']]},
+  {id: 'T2', title: 'Book for 16:00', fresh: 'signed-in', race: true, done: 'booked',
+    text: 'Now book a room for 4 people today from 16:00 for 2 hours.'},
+  {id: 'T3', title: 'Cancel', done: 'cancel-user',
+    text: 'Your plans changed. Cancel the booking you just made.'},
+];
+const SUSQ = [
+  'I think that I would like to use this system frequently.',
+  'I found the system unnecessarily complex.',
+  'I thought the system was easy to use.',
+  'I think that I would need the support of a technical person to be able to use this system.',
+  'I found the various functions in this system were well integrated.',
+  'I thought there was too much inconsistency in this system.',
+  'I would imagine that most people would learn to use this system very quickly.',
+  'I found the system very cumbersome to use.',
+  'I felt very confident using the system.',
+  'I needed to learn a lot of things before I could get going with this system.',
+];
+const GYEARS = ['1st year', '2nd year', '3rd year', '4th year', 'Master’s', 'Other'];
+let G = null;
+function gSave(){ try { localStorage.setItem(GKEY, JSON.stringify(G)); } catch (e){} }
+function gCode(){ const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for (let i = 0; i < 4; i++) c += A[Math.floor(Math.random() * A.length)]; return c; }
+function gNew(){ G = {step: 'intro', code: gCode(), year: '', task: 0, pending: false, results: [], sus: Array(10).fill(null), q1: '', q2: '', q3: '', at: null, saved: false, missing: false}; gSave(); }
+function gLoad(){ try { G = JSON.parse(localStorage.getItem(GKEY) || 'null'); } catch (e){ G = null; } if (!G || !G.code) gNew(); }
+function gHas(type){ return !!(S.test && S.test.events && S.test.events.some((e) => e.type === type)); }
+function gStartTask(i){
+  const T = GTASKS[i];
+  if (T.fresh){
+    reset(false);
+    if (T.fresh === 'signed-in'){ S.user = DEMO_USER; S.search = defaultSearch(); S.screen = 'home'; S.stack = []; }
+  }
+  S.demo.race = !!T.race;
+  G.step = 'task'; G.task = i; G.pending = false; gSave();
+  S.test = {running: true, pid: G.code + '-' + T.id, t0: Date.now(), events: [], endMs: null};
+  S.ui.view = 'student'; S.flash = null; S.scanMsg = null;
+  save(); render(); window.scrollTo(0, 0);
+}
+function gEndTask(ok){
+  if (!G || G.step !== 'task' || G.pending || !S.test || !S.test.running) return;
+  S.test.running = false; S.test.endMs = Date.now() - S.test.t0;
+  const sum = testSummary(S.test); sum.done = ok; sum.task = GTASKS[G.task].id;
+  G.results[G.task] = sum; G.pending = true;
+  S.demo.race = false;
+  gSave(); save(); renderGuide();
+}
+function gOnEvent(type){
+  if (!G || G.step !== 'task' || G.pending) return;
+  if (type === GTASKS[G.task].done) setTimeout(() => gEndTask(true), 0);
+  else if (GTASKS[G.task].steps) setTimeout(renderGuide, 0);
+}
+const susScore = (a) => a.some((v) => v == null) ? null : a.reduce((s, v, i) => s + (i % 2 === 0 ? v - 1 : 5 - v), 0) * 2.5;
+function gText(){
+  const when = G.at ? new Date(G.at).toLocaleString('en-GB', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : '';
+  const lines = ['NU Campus Space · guided test', `Code ${G.code} · ${G.year || 'year not given'} · ${G.device || ''} · ${when}`];
+  GTASKS.forEach((T, i) => {
+    const r = G.results[i];
+    if (!r){ lines.push(`${T.id} ${T.title}: not reached`); return; }
+    const parts = [`${r.done ? 'done' : 'skipped'} in ${mmss(r.total)}`];
+    if (r.signedIn != null) parts.push('signed in ' + mmss(r.signedIn));
+    if (r.booked != null) parts.push('booked ' + mmss(r.booked));
+    if (r.checkedIn != null) parts.push('checked in ' + mmss(r.checkedIn));
+    if (r.finished != null) parts.push('finished ' + mmss(r.finished));
+    if (r.cancelled != null) parts.push('cancelled ' + mmss(r.cancelled));
+    parts.push('errors ' + r.errors, 'back taps ' + r.backs, 'screens ' + r.screens);
+    lines.push(`${T.id} ${T.title}: ${parts.join(' · ')}`);
+  });
+  const sc = susScore(G.sus);
+  lines.push(`SUS ratings: ${G.sus.map((v) => v == null ? '-' : v).join(' ')}${sc == null ? '' : ' · score ' + sc.toFixed(1)}`);
+  lines.push('Most confusing: ' + (G.q1.trim() || '-'));
+  lines.push('Change first: ' + (G.q2.trim() || '-'));
+  lines.push('Would use it: ' + (G.q3 || '-'));
+  return lines.join('\n');
+}
+function renderGuide(){
+  if (!GUIDED) return;
+  const box = $('#gt'), phone = $('#pane-student .phone');
+  if (G.step === 'intro'){
+    phone.hidden = true;
+    box.innerHTML = `<div class="card gt-card stack">
+      <p class="eyebrow m0">Usability test · about 5 minutes</p>
+      <h1 class="h1">Help us test a room-booking app</h1>
+      <p class="m0">NU Campus Space lets students book a group study room in a university library, check in at the library desk and see which rooms are free. It is a student project, and everything in it is pretend: no real room is booked.</p>
+      <ul class="gt-list"><li>You get 3 short tasks. Do them the way you normally would.</li><li>We are testing the app, not you. If something is unclear, that is what we want to find.</li><li>Then you rate the app with 10 quick statements.</li><li>It is anonymous. We only ask your year of study.</li></ul>
+      <div class="field"><label for="g-year">Your year of study</label><select id="g-year"><option value="">Choose</option>${GYEARS.map((y) => `<option${G.year === y ? ' selected' : ''}>${y}</option>`).join('')}</select></div>
+      <button class="btn primary block" data-act="g-start">Start the test</button></div>`;
+    return;
+  }
+  if (G.step === 'sus'){
+    phone.hidden = true;
+    box.innerHTML = `<div class="card gt-card stack">
+      <p class="eyebrow m0">Last step</p><h1 class="h1">How was it?</h1>
+      <p class="m0 small muted">Rate each statement from 1 (strongly disagree) to 5 (strongly agree).</p>
+      <ol class="sus">${SUSQ.map((q, i) => `<li class="${G.missing && G.sus[i] == null ? 'missing' : ''}"><p class="m0">${q}</p>
+        <div class="sus-scale" role="group" aria-label="Statement ${i + 1}, 1 strongly disagree to 5 strongly agree">${[1, 2, 3, 4, 5].map((v) => `<button type="button" data-act="g-sus" data-i="${i}" data-v="${v}" aria-pressed="${G.sus[i] === v}">${v}</button>`).join('')}</div>
+        <div class="sus-ends" aria-hidden="true"><span>Strongly disagree</span><span>Strongly agree</span></div></li>`).join('')}</ol>
+      <div class="field"><label for="g-q1">What was the most confusing moment?</label><textarea id="g-q1" rows="2">${esc(G.q1)}</textarea></div>
+      <div class="field"><label for="g-q2">What would you change first?</label><textarea id="g-q2" rows="2">${esc(G.q2)}</textarea></div>
+      <div class="field"><span class="flabel">Would you use an app like this to book a group study room?</span><div class="btnrow">${['Yes', 'Maybe', 'No'].map((v) => `<button type="button" class="btn sm gt-pick" data-act="g-q3" data-v="${v}" aria-pressed="${G.q3 === v}">${v}</button>`).join('')}</div></div>
+      ${G.missing ? `<div class="err small" role="alert">Please rate all 10 statements. The ones still missing are marked.</div>` : ''}
+      <button class="btn primary block" data-act="g-finish">Finish</button></div>`;
+    return;
+  }
+  if (G.step === 'done'){
+    phone.hidden = true;
+    box.innerHTML = `<div class="card gt-card stack">
+      <p class="okline m0">✓ Thank you!</p><h1 class="h1">Send your results to the team</h1>
+      <p class="m0">Tap <b>Send results</b> and send the text to the person who gave you this link, for example in Telegram. It has only your timings and answers, no name.</p>
+      <button class="btn primary block" data-act="g-share">Send results</button>
+      <button class="btn block" data-act="g-copy">Copy results</button>
+      <p class="m0 small muted" id="g-copied" role="status"></p>
+      <textarea id="g-out" class="gt-out" readonly rows="11" aria-label="Your results">${esc(gText())}</textarea>
+      <button class="linkbtn small" data-act="g-new">Start a new test for the next person</button></div>`;
+    return;
+  }
+  phone.hidden = false;
+  const T = GTASKS[G.task], last = G.task === GTASKS.length - 1, r = G.results[G.task];
+  box.innerHTML = `<div class="gt-task" role="region" aria-label="Your task">
+    <div class="row-between"><span class="eyebrow">Task ${G.task + 1} of ${GTASKS.length}</span>${G.pending ? '' : `<button class="linkbtn small" data-act="g-skip">I can't do it, skip</button>`}</div>
+    <p class="m0 gt-text">${T.text}</p>
+    ${T.steps ? `<ol class="gt-steps">${T.steps.map(([ev, label]) => `<li class="${gHas(ev) ? 'ok' : ''}">${gHas(ev) ? '✓ ' : ''}${label}</li>`).join('')}</ol>` : ''}
+    ${G.pending ? `<div class="gt-done"><b>${r && r.done ? '✓ Task done' : 'Task skipped'}</b><button class="btn primary sm" data-act="g-next">${last ? 'Go to the questions' : 'Next task'}</button></div>` : ''}
+  </div>`;
+}
+function gStart(){
+  document.body.classList.add('guided');
+  gLoad();
+  if (G.step === 'task' && !(S.test && (S.test.running || G.pending))) G.step = 'intro';
+  S.ui.view = 'student';
+  $('#gt').addEventListener('input', (e) => {
+    const t = e.target;
+    if (t.id === 'g-q1') G.q1 = t.value; else if (t.id === 'g-q2') G.q2 = t.value; else if (t.id === 'g-year') G.year = t.value; else return;
+    gSave();
+  });
+}
+function gAction(a, d, el){
+  switch (a){
+    case 'g-start': { const y = $('#g-year'); if (y) G.year = y.value; G.device = innerWidth < 760 ? 'phone' : 'laptop'; G.results = []; gStartTask(0); return true; }
+    case 'g-skip': gEndTask(false); return true;
+    case 'g-next': {
+      if (G.task < GTASKS.length - 1) gStartTask(G.task + 1);
+      else { G.step = 'sus'; G.pending = false; gSave(); renderGuide(); window.scrollTo(0, 0); }
+      return true;
+    }
+    case 'g-sus': {
+      const i = Number(d.i), v = Number(d.v); G.sus[i] = v;
+      $$(`#gt [data-act="g-sus"][data-i="${i}"]`).forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.v) === v)));
+      const li = el.closest('li'); if (li) li.classList.remove('missing');
+      gSave(); return true;
+    }
+    case 'g-q3': { G.q3 = d.v; $$('#gt [data-act="g-q3"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === d.v))); gSave(); return true; }
+    case 'g-finish': {
+      if (G.sus.some((v) => v == null)){ G.missing = true; gSave(); renderGuide(); const m = $('#gt li.missing'); if (m) m.scrollIntoView({block: 'center'}); return true; }
+      G.missing = false; G.step = 'done'; G.at = new Date().toISOString();
+      if (!G.saved){ try { const all = JSON.parse(localStorage.getItem(GRKEY) || '[]'); all.push(gText()); localStorage.setItem(GRKEY, JSON.stringify(all)); } catch (e){} G.saved = true; }
+      gSave(); renderGuide(); window.scrollTo(0, 0); return true;
+    }
+    case 'g-share': {
+      const text = gText();
+      if (navigator.share) navigator.share({text}).catch(() => {});
+      else gCopy(text);
+      return true;
+    }
+    case 'g-copy': gCopy(gText()); return true;
+    case 'g-new': gNew(); reset(false); renderGuide(); window.scrollTo(0, 0); return true;
+  }
+  return false;
+}
+function gCopy(text){
+  const note = $('#g-copied'), ta = $('#g-out');
+  const fallback = () => { if (ta){ ta.focus(); ta.select(); } if (note) note.textContent = 'Select the text below and copy it.'; };
+  try { navigator.clipboard.writeText(text).then(() => { if (note) note.textContent = 'Copied. Paste it into a message to the team.'; }, fallback); } catch (e){ fallback(); }
+}
+
 /* ---------- start ---------- */
 $('#tools').addEventListener('toggle', () => {
   if (!$('#tools').open && S.test && S.test.running){ const bar = document.querySelector('.bar'); bar.classList.remove('open'); const tg = document.querySelector('.demo-toggle'); if (tg) tg.setAttribute('aria-expanded', 'false'); }
 });
 if (!load()) seed();
+if (GUIDED) gStart();
 fromHash();
 render();
 if (typeof window.qrcode !== 'function'){
